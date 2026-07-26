@@ -67,7 +67,8 @@ Kernel (K):
   matches recordstore's canonical JSON format — sorted keys, compact
   separators, sha256 hex ids)
 - K-2 ChannelId derivation + genesis validation rules
-- K-3 Causal-DAG merge with deterministic tie-break; property tests
+- K-3 ~~Causal-DAG merge with deterministic tie-break; property tests~~ **done**
+  (`ucomm.log`: AuthorLog + merge_causal)
 - K-4 recordstore adapter for author logs (one envelope per record?)
 - K-5 Rendezvous interface + InMemory impl (in skeleton) → PSS shim
 - K-6 MLS feasibility spike: epoch state as control events over logs
