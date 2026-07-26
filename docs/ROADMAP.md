@@ -69,7 +69,8 @@ Kernel (K):
 - K-2 ChannelId derivation + genesis validation rules
 - K-3 ~~Causal-DAG merge with deterministic tie-break; property tests~~ **done**
   (`ucomm.log`: AuthorLog + merge_causal)
-- K-4 recordstore adapter for author logs (one envelope per record?)
+- K-4 ~~recordstore adapter for author logs~~ **done** (`ucomm.store`: one
+  envelope per record, keyed by zero-padded seq for native key-order iteration)
 - K-5 Rendezvous interface + InMemory impl (in skeleton) → PSS shim
 - K-6 MLS feasibility spike: epoch state as control events over logs
 - K-7 Device subkey delegation cert format (coordinate with Swarm ID)

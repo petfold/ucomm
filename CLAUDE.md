@@ -65,6 +65,11 @@ attention layer, universal inbox, discovery. Read `docs/DESIGN.md` first;
 - `src/ucomm/attention.py` — priority algebra + policy engine skeleton
   (issue A-1).
 - `src/ucomm/rendezvous.py` — interface + InMemory impl (issue K-5).
+- `src/ucomm/log.py` — `AuthorLog` + causal-DAG `merge_causal` (issue K-3,
+  done).
+- `src/ucomm/store.py` — recordstore adapter, one envelope per record (issue
+  K-4, done). `recordstore` is now a real dependency (PyPI, pinned `>=0.11,
+  <0.12`).
 - `docs/RECOMMENDATION.md` is v2: the prior decentralized-recsys
   conversation is merged (R-1 done). Key commitments: sequencing embeddings →
   import → open ingestion → native CF; bridges double as taste-signal
