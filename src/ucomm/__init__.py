@@ -1,15 +1,28 @@
 """ucomm: universal communicator middleware for Ethereum Swarm (working title)."""
 
-from .envelope import AttentionClaim, Envelope, EventKind, Genesis, GenesisError, TimeWindow
 from .attention import Decision, Intensity, PolicyState, SenderContext, decide
-from .rendezvous import InMemoryRendezvous, Rendezvous
+from .envelope import AttentionClaim, Envelope, EventKind, Genesis, GenesisError, TimeWindow
 from .log import AuthorLog, merge_causal
+from .rendezvous import InMemoryRendezvous, Rendezvous
 from .store import RecordStoreAuthorLog, envelope_to_record, record_to_envelope
 
 __all__ = [
-    "AttentionClaim", "Envelope", "EventKind", "Genesis", "GenesisError", "TimeWindow",
-    "Decision", "Intensity", "PolicyState", "SenderContext", "decide",
-    "InMemoryRendezvous", "Rendezvous",
-    "AuthorLog", "merge_causal",
-    "RecordStoreAuthorLog", "envelope_to_record", "record_to_envelope",
+    "AttentionClaim",
+    "AuthorLog",
+    "Decision",
+    "Envelope",
+    "EventKind",
+    "Genesis",
+    "GenesisError",
+    "InMemoryRendezvous",
+    "Intensity",
+    "PolicyState",
+    "RecordStoreAuthorLog",
+    "Rendezvous",
+    "SenderContext",
+    "TimeWindow",
+    "decide",
+    "envelope_to_record",
+    "merge_causal",
+    "record_to_envelope",
 ]

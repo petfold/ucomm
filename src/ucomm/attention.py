@@ -10,9 +10,9 @@ constructs envelopes. One-way dependency: attention -> envelope, never reverse.
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from enum import IntEnum
-from typing import Mapping, Optional
 
 from .envelope import Envelope, EventKind, PubKey
 
@@ -51,7 +51,7 @@ class SenderContext:
     """What the receiver knows about the sender (from identity/WoT + recsys)."""
 
     known_contact: bool
-    wot_distance: Optional[int] = None  # None = no path
+    wot_distance: int | None = None  # None = no path
     recsys_prior: int = 0  # advisory prior from RECOMMENDATION.md section 6
     collateral_valid: bool = False
 

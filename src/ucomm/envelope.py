@@ -15,7 +15,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import Optional
 
 from .encoding import content_hash
 
@@ -57,10 +56,23 @@ class Privacy(str, Enum):
     E2EE = "e2ee"
 
 
-# DESIGN.md section 3.3.
-MEDIA_KINDS = frozenset({"text", "audio", "video", "file"})
-WRITE_POLICIES = frozenset({"anyone", "members", "broadcaster"})
-# DESIGN.md section 4 profile table.
+class MediaKind(str, Enum):
+    TEXT = "text"
+    AUDIO = "audio"
+    VIDEO = "video"
+    FILE = "file"
+
+
+class WritePolicy(str, Enum):
+    ANYONE = "anyone"
+    MEMBERS = "members"
+    BROADCASTER = "broadcaster"
+
+
+# DESIGN.md section 4 profile table. Unlike the closed-set fields above
+# (typed as Enums), profile names stay open-ended -- apps are meant to be
+# able to register new blessed profiles without touching the kernel -- so
+# this is a whitelist checked in Genesis.validate() instead of a type.
 BLESSED_PROFILES = frozenset(
     {"mail", "chat", "call", "open-band", "broadcast", "social", "forum"}
 )
@@ -93,8 +105,8 @@ class AttentionClaim:
     urgency: int
     relevance: TimeWindow
     interactivity: int = 0  # 0..100
-    expected_duration_s: Optional[int] = None
-    collateral: Optional[str] = None
+    expected_duration_s: int | None = None
+    collateral: str | None = None
 
     @property
     def claimed_priority(self) -> int:
@@ -104,8 +116,8 @@ class AttentionClaim:
 @dataclass(frozen=True)
 class MediaDescriptor:
     mime: str
-    size: Optional[int] = None
-    codec: Optional[str] = None
+    size: int | None = None
+    codec: str | None = None
 
 
 @dataclass(frozen=True)
@@ -116,22 +128,26 @@ class Genesis:
     """
 
     membership: Membership
-    media: tuple[str, ...]  # subset of {"text","audio","video","file"}
+    media: tuple[MediaKind, ...]  # subset of MediaKind (DESIGN.md section 3.3)
     persistence: Persistence
     privacy: Privacy
     ordering: Ordering
-    write_policy: str  # "anyone" | "members" | "broadcaster"
-    rate_limit_per_epoch: Optional[int] = None
+    write_policy: WritePolicy
+    rate_limit_per_epoch: int | None = None
     suggested_priority_offset: int = 0  # advisory (DESIGN.md section 9)
-    profile: Optional[str] = None  # blessed profile name, e.g. "chat" (DESIGN 4)
+    profile: str | None = None  # blessed profile name, e.g. "chat" (DESIGN 4)
     nonce: str = ""
 
     def validate(self) -> None:
         """Raise GenesisError if this record's parameter vector is malformed.
 
-        Not exhaustive cross-field policy (that's the profile conformance
-        harness, issue K-8) — just the checks that must hold for *any*
-        channel regardless of profile.
+        Closed-set fields (membership, persistence, ordering, privacy, media,
+        write_policy) are typed as Enums; a wrong *value* there is a type
+        error at construction time, not something this method re-checks.
+        What's left is the structural/range constraints Python's type system
+        can't express, plus `profile`, which is deliberately an open string
+        (see BLESSED_PROFILES) rather than an Enum. Not exhaustive cross-field
+        policy either -- that's the profile conformance harness, issue K-8.
         """
         if not self.nonce:
             raise GenesisError(
@@ -141,11 +157,6 @@ class Genesis:
             )
         if not self.media:
             raise GenesisError("media must declare at least one kind")
-        unknown_media = set(self.media) - MEDIA_KINDS
-        if unknown_media:
-            raise GenesisError(f"unknown media kind(s): {sorted(unknown_media)}")
-        if self.write_policy not in WRITE_POLICIES:
-            raise GenesisError(f"unknown write_policy: {self.write_policy!r}")
         if self.rate_limit_per_epoch is not None and self.rate_limit_per_epoch <= 0:
             raise GenesisError("rate_limit_per_epoch must be positive if set")
         if self.profile is not None and self.profile not in BLESSED_PROFILES:
@@ -165,13 +176,20 @@ class Envelope:
     seq: int
     kind: EventKind
     refs: tuple[EventHash, ...] = ()
-    media: Optional[MediaDescriptor] = None
-    payload: Optional[SwarmRef] = None
-    inline: Optional[bytes] = None
-    attention: Optional[AttentionClaim] = None
-    sig: str = ""  # TODO K-2: real signature over canonical bytes
+    media: MediaDescriptor | None = None
+    payload: SwarmRef | None = None
+    inline: bytes | None = None
+    attention: AttentionClaim | None = None
+    sig: str = ""  # placeholder; M1 adds real signing over canonical bytes
 
     def event_hash(self) -> EventHash:
+        # NOTE for when real signing lands: this hashes `sig` along with
+        # everything else, which is fine while `sig` is always "" but is the
+        # wrong shape for a real signature -- a signer needs the hash of the
+        # *unsigned* fields to sign, and refs (which point to event_hash)
+        # shouldn't shift depending on signature bytes. Splitting this into
+        # an unsigned-content hash + a separate signed EventHash is part of
+        # wiring up real signatures, not a change to make speculatively now.
         return content_hash(self)
 
     def is_control_plane(self) -> bool:

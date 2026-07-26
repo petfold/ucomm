@@ -3,15 +3,16 @@
 import pytest
 
 from ucomm import Genesis, GenesisError
-from ucomm.envelope import Membership, Ordering, Persistence, Privacy
+from ucomm.envelope import MediaKind, Membership, Ordering, Persistence, Privacy, WritePolicy
 
 
 def genesis(**overrides):
-    fields = dict(
-        membership=Membership.INVITE, media=("text",), persistence=Persistence.PERMANENT,
-        privacy=Privacy.E2EE, ordering=Ordering.CAUSAL_DAG, write_policy="members",
-        profile="chat", nonce="n1",
-    )
+    fields = {
+        "membership": Membership.INVITE, "media": (MediaKind.TEXT,),
+        "persistence": Persistence.PERMANENT, "privacy": Privacy.E2EE,
+        "ordering": Ordering.CAUSAL_DAG, "write_policy": WritePolicy.MEMBERS,
+        "profile": "chat", "nonce": "n1",
+    }
     fields.update(overrides)
     return Genesis(**fields)
 
@@ -30,14 +31,13 @@ def test_empty_media_rejected():
         genesis(media=()).channel_id()
 
 
-def test_unknown_media_kind_rejected():
-    with pytest.raises(GenesisError, match="video-8k"):
-        genesis(media=("text", "video-8k")).channel_id()
-
-
-def test_unknown_write_policy_rejected():
-    with pytest.raises(GenesisError, match="write_policy"):
-        genesis(write_policy="admin-only").channel_id()
+def test_media_kind_and_write_policy_are_closed_sets():
+    # Enforced by the Enum type itself, not a Genesis.validate() check --
+    # unknown values raise at construction, before a Genesis even exists.
+    with pytest.raises(ValueError):
+        MediaKind("video-8k")
+    with pytest.raises(ValueError):
+        WritePolicy("admin-only")
 
 
 def test_non_positive_rate_limit_rejected():

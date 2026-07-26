@@ -9,13 +9,21 @@ per-author sequence order — no separate index structure needed.
 
 from __future__ import annotations
 
-from typing import Any, Iterator, Optional
+from collections.abc import Iterator
+from typing import Any
 
 from recordstore import RecordStore
 
 from .encoding import to_jsonable
-from .envelope import (AttentionClaim, ChannelId, Envelope, EventKind,
-                        MediaDescriptor, PubKey, TimeWindow)
+from .envelope import (
+    AttentionClaim,
+    ChannelId,
+    Envelope,
+    EventKind,
+    MediaDescriptor,
+    PubKey,
+    TimeWindow,
+)
 
 _SEQ_WIDTH = 20  # zero-padded so lexicographic key order == numeric seq order
 
@@ -35,7 +43,7 @@ def envelope_to_record(env: Envelope) -> dict[str, Any]:
 
 
 def record_to_envelope(record: dict[str, Any]) -> Envelope:
-    attention: Optional[AttentionClaim] = None
+    attention: AttentionClaim | None = None
     raw_attention = record.get("attention")
     if raw_attention is not None:
         window = raw_attention["relevance"]
@@ -46,7 +54,7 @@ def record_to_envelope(record: dict[str, Any]) -> Envelope:
             expected_duration_s=raw_attention["expected_duration_s"],
             collateral=raw_attention["collateral"],
         )
-    media: Optional[MediaDescriptor] = None
+    media: MediaDescriptor | None = None
     raw_media = record.get("media")
     if raw_media is not None:
         media = MediaDescriptor(mime=raw_media["mime"], size=raw_media["size"],
@@ -76,7 +84,7 @@ class RecordStoreAuthorLog:
         self._store = store
         self._channel = channel
         self._author = author
-        self._last_seq: Optional[int] = None
+        self._last_seq: int | None = None
         for env in self:
             self._last_seq = env.seq
 

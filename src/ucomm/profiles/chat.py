@@ -12,16 +12,29 @@ already available) is a drop-in swap, not a rewrite of this module.
 
 from __future__ import annotations
 
-from ..envelope import (Envelope, EventHash, EventKind, Genesis, GenesisError,
-                         Membership, Ordering, Persistence, Privacy, PubKey)
+from ..envelope import (
+    Envelope,
+    EventHash,
+    EventKind,
+    Genesis,
+    GenesisError,
+    MediaKind,
+    Membership,
+    Ordering,
+    Persistence,
+    Privacy,
+    PubKey,
+    WritePolicy,
+)
 from ..log import AuthorLog, merge_causal
 
 
 def chat_genesis(nonce: str, rate_limit_per_epoch: int | None = None) -> Genesis:
     """Construct a genesis satisfying the chat profile; nonce distinguishes channels."""
     return Genesis(
-        membership=Membership.INVITE, media=("text",), persistence=Persistence.PERMANENT,
-        privacy=Privacy.E2EE, ordering=Ordering.CAUSAL_DAG, write_policy="members",
+        membership=Membership.INVITE, media=(MediaKind.TEXT,),
+        persistence=Persistence.PERMANENT, privacy=Privacy.E2EE,
+        ordering=Ordering.CAUSAL_DAG, write_policy=WritePolicy.MEMBERS,
         rate_limit_per_epoch=rate_limit_per_epoch, profile="chat", nonce=nonce,
     )
 
@@ -41,7 +54,7 @@ def validate_chat_genesis(genesis: Genesis) -> None:
         raise GenesisError("chat profile requires E2EE privacy")
     if genesis.ordering != Ordering.CAUSAL_DAG:
         raise GenesisError("chat profile requires causal-DAG ordering")
-    if genesis.write_policy != "members":
+    if genesis.write_policy != WritePolicy.MEMBERS:
         raise GenesisError("chat profile requires write_policy=members")
 
 

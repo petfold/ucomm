@@ -1,8 +1,16 @@
 """Golden decision tests for the policy engine (issue A-1) using Attila's four
 canonical examples, plus determinism and ceiling monotonicity checks."""
 
-from ucomm import (AttentionClaim, Envelope, EventKind, Intensity, PolicyState,
-                   SenderContext, TimeWindow, decide)
+from ucomm import (
+    AttentionClaim,
+    Envelope,
+    EventKind,
+    Intensity,
+    PolicyState,
+    SenderContext,
+    TimeWindow,
+    decide,
+)
 
 NOW = 1_000_000.0
 WINDOW = TimeWindow(start=NOW - 10, end=NOW + 7200)

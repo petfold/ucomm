@@ -17,9 +17,12 @@ Planned implementations:
 from __future__ import annotations
 
 from collections import defaultdict
-from typing import Iterable, Protocol
+from collections.abc import Callable, Iterable
+from typing import Protocol
 
 from .envelope import Envelope
+
+AdmitFn = Callable[[str, Envelope], bool]
 
 
 class Rendezvous(Protocol):
@@ -37,9 +40,9 @@ class Rendezvous(Protocol):
 class InMemoryRendezvous:
     """Process-local Rendezvous for tests. Admission hook mirrors the real design."""
 
-    def __init__(self, admit=None) -> None:
+    def __init__(self, admit: AdmitFn | None = None) -> None:
         self._boxes: dict[str, list[Envelope]] = defaultdict(list)
-        self._admit = admit or (lambda address, env: True)
+        self._admit: AdmitFn = admit or (lambda address, env: True)
 
     def post(self, address: str, env: Envelope) -> bool:
         if not self._admit(address, env):
@@ -47,6 +50,6 @@ class InMemoryRendezvous:
         self._boxes[address].append(env)
         return True
 
-    def poll(self, address: str):
+    def poll(self, address: str) -> list[Envelope]:
         drained, self._boxes[address] = self._boxes[address], []
         return drained

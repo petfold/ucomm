@@ -16,7 +16,7 @@ implemented — only `CAUSAL_DAG` is needed for the chat profile (M1).
 
 from __future__ import annotations
 
-from typing import Iterable, Iterator
+from collections.abc import Iterable, Iterator
 
 from .envelope import Envelope, EventHash
 

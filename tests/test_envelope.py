@@ -1,11 +1,12 @@
 from ucomm import Envelope, EventKind, Genesis
-from ucomm.envelope import Membership, Ordering, Persistence, Privacy
+from ucomm.envelope import MediaKind, Membership, Ordering, Persistence, Privacy, WritePolicy
 
 
 def chat_genesis(nonce="n1"):
     return Genesis(
-        membership=Membership.INVITE, media=("text",), persistence=Persistence.PERMANENT,
-        privacy=Privacy.E2EE, ordering=Ordering.CAUSAL_DAG, write_policy="members",
+        membership=Membership.INVITE, media=(MediaKind.TEXT,),
+        persistence=Persistence.PERMANENT, privacy=Privacy.E2EE,
+        ordering=Ordering.CAUSAL_DAG, write_policy=WritePolicy.MEMBERS,
         profile="chat", nonce=nonce,
     )
 

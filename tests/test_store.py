@@ -3,8 +3,15 @@
 import pytest
 from recordstore import MemoryBytesStore, RecordStore
 
-from ucomm import (AttentionClaim, Envelope, EventKind, RecordStoreAuthorLog,
-                   TimeWindow, envelope_to_record, record_to_envelope)
+from ucomm import (
+    AttentionClaim,
+    Envelope,
+    EventKind,
+    RecordStoreAuthorLog,
+    TimeWindow,
+    envelope_to_record,
+    record_to_envelope,
+)
 from ucomm.envelope import MediaDescriptor
 
 CHANNEL = "ch"
