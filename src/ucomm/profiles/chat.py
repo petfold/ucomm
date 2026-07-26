@@ -72,12 +72,13 @@ class ChatChannel:
     is still the address (`address_of(key)`), matching how Bee identifies
     feed/SOC owners.
 
-    Messages form a single causal chain: each send references the previous
-    message across all members, so `messages()` (a `merge_causal` call) always
-    returns send order. A real deployment has members polling each other's
-    feeds and racing to append, hence genuinely concurrent tips and ties
-    broken by `merge_causal`'s hash order — `ucomm.log`'s property tests
-    already cover that; this class only needs to feed it real data.
+    Messages and receipts share one causal chain: every append (`send` or
+    `mark_read`) references the previous event across all members, so
+    `messages()`/`read_state()` (both `merge_causal` calls) always return
+    send order. A real deployment has members polling each other's feeds and
+    racing to append, hence genuinely concurrent tips and ties broken by
+    `merge_causal`'s hash order — `ucomm.log`'s property tests already cover
+    that; this class only needs to feed it real data.
     """
 
     def __init__(self, genesis: Genesis, keys: tuple[PrivateKey, ...]) -> None:
@@ -95,9 +96,26 @@ class ChatChannel:
     def send(self, author: PubKey, text: str) -> Envelope:
         if author not in self._keys:
             raise ValueError(f"{author!r} is not a member of this channel")
+        return self._append(author, EventKind.MESSAGE, inline=text.encode("utf-8"))
+
+    def mark_read(self, reader: PubKey, through: Envelope) -> Envelope:
+        """Record that `reader` has read up through `through` (inclusive).
+
+        DESIGN.md section 10: "read-state is a synced event kind" -- a
+        RECEIPT envelope like any other, so it syncs the same way messages
+        do. The acknowledged event's hash is a small inline pointer, not
+        channel content (CLAUDE.md invariant 3, two planes); `refs` stays
+        reserved for causal-DAG ordering, same as every other event here.
+        """
+        if reader not in self._keys:
+            raise ValueError(f"{reader!r} is not a member of this channel")
+        acked = through.event_hash().encode("ascii")
+        return self._append(reader, EventKind.RECEIPT, inline=acked)
+
+    def _append(self, author: PubKey, kind: EventKind, *, inline: bytes) -> Envelope:
         unsigned = Envelope(
             channel=self.channel, author=author, seq=self._next_seq[author],
-            kind=EventKind.MESSAGE, refs=self._tip, inline=text.encode("utf-8"),
+            kind=kind, refs=self._tip, inline=inline,
         )
         env = sign_envelope(unsigned, self._keys[author])
         self._logs[author].append(env)
@@ -105,10 +123,21 @@ class ChatChannel:
         self._tip = (env.event_hash(),)
         return env
 
-    def messages(self) -> list[Envelope]:
+    def _verified_events(self) -> list[Envelope]:
         all_events = [env for log in self._logs.values() for env in log]
         merged = merge_causal(all_events)
         for env in merged:
             if not verify_envelope(env):
                 raise InvalidSignature(f"invalid signature on event from {env.author!r}")
         return merged
+
+    def messages(self) -> list[Envelope]:
+        return [env for env in self._verified_events() if env.kind is EventKind.MESSAGE]
+
+    def read_state(self) -> dict[PubKey, EventHash]:
+        """Latest event hash each member has acknowledged (last receipt wins)."""
+        state: dict[PubKey, EventHash] = {}
+        for env in self._verified_events():
+            if env.kind is EventKind.RECEIPT and env.inline is not None:
+                state[env.author] = env.inline.decode("ascii")
+        return state

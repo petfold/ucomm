@@ -78,10 +78,12 @@ attention layer, universal inbox, discovery. Read `docs/DESIGN.md` first;
   <0.12`).
 - `src/ucomm/profiles/chat.py` — chat profile: `chat_genesis`,
   `validate_chat_genesis`, and an in-process `ChatChannel` (issue K-8, done).
-  `ChatChannel` now takes member `PrivateKey`s and really signs/verifies every
-  message. Still no network — logs are plain `AuthorLog`s; swapping in
-  `RecordStoreAuthorLog` or a real feed is the remaining M1 step, not a
-  rewrite.
+  `ChatChannel` takes member `PrivateKey`s and really signs/verifies every
+  event. `mark_read`/`read_state` give synced read-state receipts (M1, done):
+  RECEIPT envelopes on the same causal chain, acknowledged event hash carried
+  as a small `inline` pointer rather than in `refs`. Still no network — logs
+  are plain `AuthorLog`s; swapping in `RecordStoreAuthorLog` or a real feed,
+  plus out-of-band contact exchange, are the remaining M1 steps, not a rewrite.
 - `docs/RECOMMENDATION.md` is v2: the prior decentralized-recsys
   conversation is merged (R-1 done). Key commitments: sequencing embeddings →
   import → open ingestion → native CF; bridges double as taste-signal

@@ -40,9 +40,14 @@ end-to-end; read-state receipts synced. No GSOC needed.
   digest via `bee.swarm.keys`, the same scheme Bee verifies SOC/feed
   signatures against). `ChatChannel` now signs every send and verifies every
   read instead of leaving `sig` a placeholder.
+- Read-state receipts **done**: `ChatChannel.mark_read`/`read_state` --
+  RECEIPT envelopes on the same causal chain as messages, acknowledged event
+  hash carried as a small `inline` pointer (not `refs`, which stays reserved
+  for ordering; CLAUDE.md invariant 3). `messages()` filters to MESSAGE kind
+  only, so this was additive -- no existing test changed.
 - Still open: author logs actually on Swarm feeds (currently in-process
   `AuthorLog`/`RecordStoreAuthorLog`, no network); out-of-band contact
-  exchange; read-state receipts.
+  exchange.
 
 **M2 — daemon + universal inbox + first bridges.**
 Notification daemon with graded alerts and dashboard (active/obsolete);

@@ -77,6 +77,39 @@ def test_tampered_message_fails_verification_on_read():
         channel.messages()
 
 
+def test_mark_read_records_and_syncs_read_state():
+    channel = ChatChannel(chat_genesis("n1"), keys=(ALICE_KEY, BOB_KEY))
+    alice, bob = address_of(ALICE_KEY), address_of(BOB_KEY)
+
+    first = channel.send(alice, "hi bob")
+    channel.send(alice, "you there?")
+    channel.mark_read(bob, first)
+
+    assert channel.read_state() == {bob: first.event_hash()}
+    # Read-state receipts are control-plane and don't show up as messages.
+    assert [env.inline.decode("utf-8") for env in channel.messages()] == \
+        ["hi bob", "you there?"]
+
+
+def test_mark_read_last_receipt_wins():
+    channel = ChatChannel(chat_genesis("n1"), keys=(ALICE_KEY, BOB_KEY))
+    bob = address_of(BOB_KEY)
+    first = channel.send(address_of(ALICE_KEY), "one")
+    second = channel.send(address_of(ALICE_KEY), "two")
+
+    channel.mark_read(bob, first)
+    channel.mark_read(bob, second)
+
+    assert channel.read_state() == {bob: second.event_hash()}
+
+
+def test_mark_read_from_non_member_rejected():
+    channel = ChatChannel(chat_genesis("n1"), keys=(ALICE_KEY, BOB_KEY))
+    msg = channel.send(address_of(ALICE_KEY), "hi")
+    with pytest.raises(ValueError):
+        channel.mark_read(address_of(MALLORY_KEY), msg)
+
+
 def test_group_chat_message_order_stable_regardless_of_read_order():
     channel = ChatChannel(chat_genesis("group-1"), keys=(ALICE_KEY, BOB_KEY, CAROL_KEY))
     addrs = [address_of(ALICE_KEY), address_of(BOB_KEY), address_of(CAROL_KEY)]
