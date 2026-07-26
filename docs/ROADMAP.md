@@ -76,7 +76,10 @@ Kernel (K):
 - K-5 Rendezvous interface + InMemory impl (in skeleton) → PSS shim
 - K-6 MLS feasibility spike: epoch state as control events over logs
 - K-7 Device subkey delegation cert format (coordinate with Swarm ID)
-- K-8 Profile conformance test harness (chat profile first)
+- K-8 ~~Profile conformance test harness (chat profile first)~~ **done**
+  (`ucomm.profiles.chat`: `chat_genesis`/`validate_chat_genesis` + a minimal
+  in-process `ChatChannel` exercising genesis validation, per-author logs,
+  and causal-DAG merge end-to-end; no network yet)
 - K-9 Relay metadata minimization survey (light clients vs PSS/GSOC full-node
   requirement)
 

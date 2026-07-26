@@ -73,6 +73,10 @@ attention layer, universal inbox, discovery. Read `docs/DESIGN.md` first;
 - `src/ucomm/store.py` — recordstore adapter, one envelope per record (issue
   K-4, done). `recordstore` is now a real dependency (PyPI, pinned `>=0.11,
   <0.12`).
+- `src/ucomm/profiles/chat.py` — chat profile: `chat_genesis`,
+  `validate_chat_genesis`, and an in-process `ChatChannel` (issue K-8, done).
+  No network yet — `ChatChannel` holds plain `AuthorLog`s; swapping in
+  `RecordStoreAuthorLog` or a real feed is the M1 step, not a rewrite.
 - `docs/RECOMMENDATION.md` is v2: the prior decentralized-recsys
   conversation is merged (R-1 done). Key commitments: sequencing embeddings →
   import → open ingestion → native CF; bridges double as taste-signal
