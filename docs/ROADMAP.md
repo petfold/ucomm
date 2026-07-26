@@ -8,11 +8,15 @@ standalone libraries with their own repos once stable:
 | Module | Scope | Depends on | Standalone? |
 |---|---|---|---|
 | `ucomm.envelope` | envelope + genesis schema, canonical encoding | — | eventually (schema lib) |
+| `ucomm.encoding` | canonical byte encoding + content hashing (`ChannelId`/`EventHash`) | — | yes, alongside envelope |
 | `ucomm.signing` | secp256k1 signing/verification (`sign_envelope`, `verify_envelope`) | envelope, `swarm-bee` | **yes** — a generic Bee-compatible envelope signer |
+| `ucomm.contact` | out-of-band contact exchange (`ContactCard`) | signing | **yes** — generic address self-attestation |
 | `ucomm.log` | per-author append-only channel logs | recordstore | no (thin adapter) |
+| `ucomm.store` | recordstore adapter for author logs (`RecordStoreAuthorLog`) | recordstore | no (thin adapter) |
 | `ucomm.bee` | real Swarm feed backend for `RecordStoreAuthorLog` | recordstore's Bee extra | no (thin adapter) |
 | `ucomm.rendezvous` | `Rendezvous` interface; InMemory / PSS-shim / GSOC impls | Bee API | no |
 | `ucomm.attention` | priority algebra + policy engine (pure functions + policy store) | envelope | **yes** — useful for any notification system |
+| `ucomm.profiles.chat` | chat profile: conformance check + end-to-end `ChatChannel` | envelope, log, signing | no (profile, not standalone) |
 | `identity-wot` | root keys, device delegation, petnames, attestations | Swarm feeds, ACT | **yes** — track Swarm ID work |
 | `ucomm.daemon` | notification daemon: subscriptions, graded alerts, read-state sync, dashboard state | all above | no |
 | `bridges/*` | Matrix, Nostr, IMAP, RSS → envelope adapters | envelope, daemon | per-bridge |
@@ -104,7 +108,8 @@ Kernel (K):
   (`ucomm.log`: AuthorLog + merge_causal)
 - K-4 ~~recordstore adapter for author logs~~ **done** (`ucomm.store`: one
   envelope per record, keyed by zero-padded seq for native key-order iteration)
-- K-5 Rendezvous interface + InMemory impl (in skeleton) → PSS shim
+- K-5 ~~Rendezvous interface + InMemory impl~~ **done** (`ucomm.rendezvous`);
+  PSS shim still open
 - K-6 MLS feasibility spike: epoch state as control events over logs
 - K-7 Device subkey delegation cert format (coordinate with Swarm ID)
 - K-8 ~~Profile conformance test harness (chat profile first)~~ **done**
@@ -115,7 +120,9 @@ Kernel (K):
   requirement)
 
 Attention (A):
-- A-1 Policy engine reference impl (in skeleton) + golden decision tests
+- A-1 ~~Policy engine reference impl~~ **done** (`ucomm.attention.decide`) +
+  golden decision tests (Attila's four canonical examples, plus determinism
+  and ceiling-monotonicity property tests)
 - A-2 Bond schedule design + minimal Gnosis Chain contract sketch
 - A-3 Reputation ratchet control loop: dynamics + defaults
 - A-4 RLN applicability study for GSOC mailboxes

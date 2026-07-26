@@ -35,6 +35,11 @@ effective_priority = min(claimed_priority, ceiling(sender))  (receiver-side cap)
 residual           = effective_priority − threshold(now)     (DND is just a high threshold)
 ```
 
+Current `decide()` only implements the non-negative bond-credit case above
+(`bond_credit` if collateral is valid, else 0); a reputation-based penalty
+(negative credibility for a known-bad actor) is A-3's reputation ratchet,
+not yet built.
+
 Attila's examples map directly: smoke from the house = high importance + high
 urgency; "beer in 2 hours" = high urgency + low importance + 2 h relevance
 window; doctor checkup = high importance + low urgency; tennis schedule = low +

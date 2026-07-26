@@ -68,9 +68,11 @@ attention layer, universal inbox, discovery. Read `docs/DESIGN.md` first;
   <2`) — the same scheme Bee verifies SOC/feed signatures against, so a
   device key doubles as a feed signer with no translation layer. `PubKey` is
   the signer's address, not a raw public key (see module docstring for why).
-- `src/ucomm/attention.py` — priority algebra + policy engine skeleton
-  (issue A-1).
-- `src/ucomm/rendezvous.py` — interface + InMemory impl (issue K-5).
+- `src/ucomm/attention.py` — priority algebra + policy engine (issue A-1,
+  done): golden decision tests (Attila's four canonical examples) plus
+  determinism/ceiling-monotonicity checks.
+- `src/ucomm/rendezvous.py` — `Rendezvous` interface + `InMemoryRendezvous`
+  (issue K-5, done for its intended M0/M1 scope; PSS shim still open).
 - `src/ucomm/log.py` — `AuthorLog` + causal-DAG `merge_causal` (issue K-3,
   done).
 - `src/ucomm/store.py` — recordstore adapter, one envelope per record (issue

@@ -35,18 +35,28 @@ docs/DESIGN.md          Architecture: two planes, channel kernel, profiles, tran
 docs/ATTENTION.md       Attention economy: priority algebra, policy engine, mechanisms
 docs/RECOMMENDATION.md  Discovery & collaborative filtering (needs merge from prior notes)
 docs/ROADMAP.md         Module decomposition, milestones, initial issues
+docs/USER_GUIDE.md      Tutorial: install, setup, worked examples
 CLAUDE.md               Instructions and invariants for Claude Code sessions
-src/ucomm/              Python prototyping track (schema, policy engine, interfaces)
+src/ucomm/              Python package (schema, policy engine, signing, chat profile)
 tests/                  pytest suite
 ```
 
 ## Status
 
-Design phase. The Python package contains the envelope schema, the priority
-algebra, and the pluggable `Rendezvous` interface — enough to prototype
-known-contact channels over Swarm feeds today. Open GSOC-based rendezvous
-(unsolicited contact, group discovery) is behind an interface, pending the
-GSOC/pub-sub work by Viktor Tóth and Viktor Trón.
+**M0 (schema + algebra) and M1 (known-contact channels over Swarm) are done**
+— see `docs/ROADMAP.md` for the full milestone/issue breakdown. Concretely:
+the envelope/genesis schema with canonical encoding and validation; the
+priority algebra and policy engine with golden decision tests; per-author
+logs with deterministic causal-DAG merge, backed by either an in-memory
+implementation or a real recordstore/Bee adapter; real secp256k1 envelope
+signing (via `swarm-bee`) and out-of-band contact exchange; and a two-party/
+group chat profile exercising all of the above end-to-end, confirmed against
+a live Bee node. New here? Start with `docs/USER_GUIDE.md`.
+
+Next up is M2: a notification daemon, the universal inbox, and the first
+bridges (IMAP, Nostr). GSOC-based rendezvous (unsolicited contact, group
+discovery) stays behind the `Rendezvous` interface, pending the GSOC/pub-sub
+work by Viktor Tóth and Viktor Trón.
 
 ## Related projects
 

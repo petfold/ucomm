@@ -183,13 +183,12 @@ class Envelope:
     sig: str = ""  # hex signature; see ucomm.signing.sign_envelope/verify_envelope
 
     def event_hash(self) -> EventHash:
-        # NOTE for when real signing lands: this hashes `sig` along with
-        # everything else, which is fine while `sig` is always "" but is the
-        # wrong shape for a real signature -- a signer needs the hash of the
-        # *unsigned* fields to sign, and refs (which point to event_hash)
-        # shouldn't shift depending on signature bytes. Splitting this into
-        # an unsigned-content hash + a separate signed EventHash is part of
-        # wiring up real signatures, not a change to make speculatively now.
+        # NOTE: this hashes `sig` along with everything else, so event_hash()
+        # changes if the envelope is ever re-signed. Currently inert: every
+        # envelope is signed exactly once (ucomm.signing.sign_envelope signs
+        # then returns), and callers hash the result, not a pre-signing
+        # draft. It would only bite if something re-signed an already-hashed
+        # (and ref'd-by-others) envelope in place -- nothing here does that.
         return content_hash(self)
 
     def is_control_plane(self) -> bool:
