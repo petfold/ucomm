@@ -61,7 +61,10 @@ attention layer, universal inbox, discovery. Read `docs/DESIGN.md` first;
 
 - `src/ucomm/envelope.py` — M0 schema draft (dataclasses); canonical encoding
   now lives in `src/ucomm/encoding.py` (K-1, done, matches recordstore's
-  format). Signatures still TODO (issue K-2).
+  format). Genesis validation + ChannelId derivation done (K-2). Real
+  signatures are still a placeholder string — M0 only calls for signature
+  stubs (ROADMAP.md milestone M0); real signing is expected at M1 once
+  device keys exist.
 - `src/ucomm/attention.py` — priority algebra + policy engine skeleton
   (issue A-1).
 - `src/ucomm/rendezvous.py` — interface + InMemory impl (issue K-5).

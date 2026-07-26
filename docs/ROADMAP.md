@@ -66,7 +66,9 @@ Kernel (K):
 - K-1 ~~Canonical encoding for envelope/genesis~~ **done** (`ucomm.encoding`;
   matches recordstore's canonical JSON format — sorted keys, compact
   separators, sha256 hex ids)
-- K-2 ChannelId derivation + genesis validation rules
+- K-2 ~~ChannelId derivation + genesis validation rules~~ **done**
+  (`Genesis.validate()`/`channel_id()`: non-empty nonce, known media kinds,
+  known write_policy, positive rate limit, blessed profile if set)
 - K-3 ~~Causal-DAG merge with deterministic tie-break; property tests~~ **done**
   (`ucomm.log`: AuthorLog + merge_causal)
 - K-4 ~~recordstore adapter for author logs~~ **done** (`ucomm.store`: one

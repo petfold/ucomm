@@ -1,8 +1,11 @@
 """Channel kernel schema: envelope and genesis records (M0 draft).
 
 See docs/DESIGN.md sections 3.2-3.3. Canonical byte encoding lives in
-`ucomm.encoding`, aligned with recordstore's format (issue K-1, done). Real
-signatures are still absent (issue K-2); `sig` is a placeholder string.
+`ucomm.encoding`, aligned with recordstore's format (issue K-1, done).
+ChannelId derivation + genesis validation rules (issue K-2, done): a Genesis
+is validated before it is hashed, so an invalid parameter vector never gets
+a ChannelId. Real signatures are still a placeholder string (`sig`); M0 calls
+for signature stubs only (see ROADMAP.md milestone M0).
 
 Invariant (DESIGN.md section 9): this module must never import ucomm.attention.
 AttentionClaim is data; its evaluation lives entirely on the receiver side.
@@ -52,6 +55,19 @@ class Privacy(str, Enum):
     PUBLIC = "public"
     ACT = "act"
     E2EE = "e2ee"
+
+
+# DESIGN.md section 3.3.
+MEDIA_KINDS = frozenset({"text", "audio", "video", "file"})
+WRITE_POLICIES = frozenset({"anyone", "members", "broadcaster"})
+# DESIGN.md section 4 profile table.
+BLESSED_PROFILES = frozenset(
+    {"mail", "chat", "call", "open-band", "broadcast", "social", "forum"}
+)
+
+
+class GenesisError(ValueError):
+    """A Genesis record fails validation (issue K-2)."""
 
 
 @dataclass(frozen=True)
@@ -110,7 +126,33 @@ class Genesis:
     profile: Optional[str] = None  # blessed profile name, e.g. "chat" (DESIGN 4)
     nonce: str = ""
 
+    def validate(self) -> None:
+        """Raise GenesisError if this record's parameter vector is malformed.
+
+        Not exhaustive cross-field policy (that's the profile conformance
+        harness, issue K-8) — just the checks that must hold for *any*
+        channel regardless of profile.
+        """
+        if not self.nonce:
+            raise GenesisError(
+                "nonce must be non-empty (distinguishes otherwise-identical "
+                "channels; an empty nonce would let two unrelated channels "
+                "with the same parameter vector collide on ChannelId)"
+            )
+        if not self.media:
+            raise GenesisError("media must declare at least one kind")
+        unknown_media = set(self.media) - MEDIA_KINDS
+        if unknown_media:
+            raise GenesisError(f"unknown media kind(s): {sorted(unknown_media)}")
+        if self.write_policy not in WRITE_POLICIES:
+            raise GenesisError(f"unknown write_policy: {self.write_policy!r}")
+        if self.rate_limit_per_epoch is not None and self.rate_limit_per_epoch <= 0:
+            raise GenesisError("rate_limit_per_epoch must be positive if set")
+        if self.profile is not None and self.profile not in BLESSED_PROFILES:
+            raise GenesisError(f"unknown profile: {self.profile!r}")
+
     def channel_id(self) -> ChannelId:
+        self.validate()
         return content_hash(self)
 
 
