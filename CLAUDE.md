@@ -90,8 +90,16 @@ attention layer, universal inbox, discovery. Read `docs/DESIGN.md` first;
   event. `mark_read`/`read_state` give synced read-state receipts (M1, done):
   RECEIPT envelopes on the same causal chain, acknowledged event hash carried
   as a small `inline` pointer rather than in `refs`. Still in-process
-  `AuthorLog`s, not wired to `ucomm.bee` yet — that swap plus out-of-band
-  contact exchange are the remaining M1 steps.
+  `AuthorLog`s, not wired to `ucomm.bee` yet — that swap is mechanical
+  (K-4/`ucomm.bee` already prove it), not a new milestone item.
+- `src/ucomm/contact.py` — out-of-band contact exchange (M1, done):
+  `ContactCard` self-attests an address with a signature domain-separated
+  from envelope signing (`_DOMAIN` prefix), so a card can't be replayed as,
+  or forged from, a signed envelope. `to_str`/`from_str` give a compact
+  pasteable/QR-able form. Deliberately not the identity-wot library (root
+  keys, device delegation, petnames — standalone, tracks "Swarm ID"); no
+  petname/label field, since DESIGN.md section 7 keeps those strictly local.
+  **M1 is now feature-complete** per ROADMAP.md's milestone description.
 - `docs/RECOMMENDATION.md` is v2: the prior decentralized-recsys
   conversation is merged (R-1 done). Key commitments: sequencing embeddings →
   import → open ingestion → native CF; bridges double as taste-signal

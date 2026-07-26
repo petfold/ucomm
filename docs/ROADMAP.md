@@ -54,7 +54,17 @@ end-to-end; read-state receipts synced. No GSOC needed.
   signature-valid, through a second process opening the same feed cold.
   `tests/test_bee_live.py` is opt-in (env-var gated; needs a reachable node
   and a funded immutable postage batch) and skipped by default.
-- Still open: out-of-band contact exchange.
+- Out-of-band contact exchange **done**: `ucomm.contact.ContactCard` --
+  a self-attested address (domain-separated signature, so it can't be
+  replayed as or forged from an envelope signature), with a compact
+  `to_str`/`from_str` form for pasting/QR codes. Deliberately not the
+  identity-wot library (root keys, device delegation, petnames --
+  standalone, tracks the ecosystem "Swarm ID" work): just proof of control
+  of an address before a channel exists.
+- **M1 is now feature-complete** per this milestone's description: real
+  signing, receipts, real feed I/O, and contact exchange are all done; the
+  chat profile itself is still only wired to in-process `AuthorLog`s (not
+  `ucomm.bee`) -- swapping that in is mechanical, not a new milestone item.
 
 **M2 — daemon + universal inbox + first bridges.**
 Notification daemon with graded alerts and dashboard (active/obsolete);
