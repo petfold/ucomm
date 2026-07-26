@@ -61,10 +61,13 @@ attention layer, universal inbox, discovery. Read `docs/DESIGN.md` first;
 
 - `src/ucomm/envelope.py` — M0 schema draft (dataclasses); canonical encoding
   now lives in `src/ucomm/encoding.py` (K-1, done, matches recordstore's
-  format). Genesis validation + ChannelId derivation done (K-2). Real
-  signatures are still a placeholder string — M0 only calls for signature
-  stubs (ROADMAP.md milestone M0); real signing is expected at M1 once
-  device keys exist.
+  format). Genesis validation + ChannelId derivation done (K-2).
+- `src/ucomm/signing.py` — real signing (M1, done): `sign_envelope` /
+  `verify_envelope` / `address_of`, secp256k1 + the Ethereum signed-message
+  digest via `bee.swarm.keys` (the `swarm-bee` package, PyPI, pinned `>=1.1,
+  <2`) — the same scheme Bee verifies SOC/feed signatures against, so a
+  device key doubles as a feed signer with no translation layer. `PubKey` is
+  the signer's address, not a raw public key (see module docstring for why).
 - `src/ucomm/attention.py` — priority algebra + policy engine skeleton
   (issue A-1).
 - `src/ucomm/rendezvous.py` — interface + InMemory impl (issue K-5).
@@ -75,8 +78,10 @@ attention layer, universal inbox, discovery. Read `docs/DESIGN.md` first;
   <0.12`).
 - `src/ucomm/profiles/chat.py` — chat profile: `chat_genesis`,
   `validate_chat_genesis`, and an in-process `ChatChannel` (issue K-8, done).
-  No network yet — `ChatChannel` holds plain `AuthorLog`s; swapping in
-  `RecordStoreAuthorLog` or a real feed is the M1 step, not a rewrite.
+  `ChatChannel` now takes member `PrivateKey`s and really signs/verifies every
+  message. Still no network — logs are plain `AuthorLog`s; swapping in
+  `RecordStoreAuthorLog` or a real feed is the remaining M1 step, not a
+  rewrite.
 - `docs/RECOMMENDATION.md` is v2: the prior decentralized-recsys
   conversation is merged (R-1 done). Key commitments: sequencing embeddings →
   import → open ingestion → native CF; bridges double as taste-signal

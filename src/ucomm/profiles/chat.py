@@ -5,12 +5,15 @@ permanent persistence, E2EE, standing (channel-level) invitation. This module
 is the conformance test harness's first customer — `validate_chat_genesis`
 is the check a chat app's genesis must pass, and `ChatChannel` is a minimal
 end-to-end exercise of the kernel (genesis validation, per-author logs,
-causal-DAG merge) with no network: everything here is in-process AuthorLogs.
-Wiring a member's log to Swarm feeds (M1) or recordstore (`RecordStoreAuthorLog`,
-already available) is a drop-in swap, not a rewrite of this module.
+causal-DAG merge, real signing) with no network: everything here is
+in-process `AuthorLog`s. Wiring a member's log to Swarm feeds (M1) or
+recordstore (`RecordStoreAuthorLog`, already available) is a drop-in swap,
+not a rewrite of this module.
 """
 
 from __future__ import annotations
+
+from bee.swarm.keys import PrivateKey
 
 from ..envelope import (
     Envelope,
@@ -27,6 +30,7 @@ from ..envelope import (
     WritePolicy,
 )
 from ..log import AuthorLog, merge_causal
+from ..signing import InvalidSignature, address_of, sign_envelope, verify_envelope
 
 
 def chat_genesis(nonce: str, rate_limit_per_epoch: int | None = None) -> Genesis:
@@ -61,6 +65,13 @@ def validate_chat_genesis(genesis: Genesis) -> None:
 class ChatChannel:
     """A two-party or closed-group chat, held as in-process per-author logs.
 
+    Members are given as `PrivateKey`s, not bare addresses: every message is
+    really signed (`ucomm.signing.sign_envelope`) and every read really
+    verifies (`verify_envelope`), so a corrupted or forged event is caught
+    before it reaches `messages()` rather than assumed away. `Envelope.author`
+    is still the address (`address_of(key)`), matching how Bee identifies
+    feed/SOC owners.
+
     Messages form a single causal chain: each send references the previous
     message across all members, so `messages()` (a `merge_causal` call) always
     returns send order. A real deployment has members polling each other's
@@ -69,24 +80,26 @@ class ChatChannel:
     already cover that; this class only needs to feed it real data.
     """
 
-    def __init__(self, genesis: Genesis, members: tuple[PubKey, ...]) -> None:
+    def __init__(self, genesis: Genesis, keys: tuple[PrivateKey, ...]) -> None:
         validate_chat_genesis(genesis)
-        if not members:
+        if not keys:
             raise ValueError("a channel needs at least one member")
         self.genesis = genesis
         self.channel = genesis.channel_id()
-        self.members = members
-        self._logs: dict[PubKey, AuthorLog] = {m: AuthorLog() for m in members}
-        self._next_seq: dict[PubKey, int] = {m: 1 for m in members}
+        self._keys: dict[PubKey, PrivateKey] = {address_of(k): k for k in keys}
+        self.members: tuple[PubKey, ...] = tuple(self._keys)
+        self._logs: dict[PubKey, AuthorLog] = {m: AuthorLog() for m in self.members}
+        self._next_seq: dict[PubKey, int] = {m: 1 for m in self.members}
         self._tip: tuple[EventHash, ...] = ()
 
     def send(self, author: PubKey, text: str) -> Envelope:
-        if author not in self._logs:
+        if author not in self._keys:
             raise ValueError(f"{author!r} is not a member of this channel")
-        env = Envelope(
+        unsigned = Envelope(
             channel=self.channel, author=author, seq=self._next_seq[author],
             kind=EventKind.MESSAGE, refs=self._tip, inline=text.encode("utf-8"),
         )
+        env = sign_envelope(unsigned, self._keys[author])
         self._logs[author].append(env)
         self._next_seq[author] += 1
         self._tip = (env.event_hash(),)
@@ -94,4 +107,8 @@ class ChatChannel:
 
     def messages(self) -> list[Envelope]:
         all_events = [env for log in self._logs.values() for env in log]
-        return merge_causal(all_events)
+        merged = merge_causal(all_events)
+        for env in merged:
+            if not verify_envelope(env):
+                raise InvalidSignature(f"invalid signature on event from {env.author!r}")
+        return merged

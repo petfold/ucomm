@@ -4,8 +4,8 @@ See docs/DESIGN.md sections 3.2-3.3. Canonical byte encoding lives in
 `ucomm.encoding`, aligned with recordstore's format (issue K-1, done).
 ChannelId derivation + genesis validation rules (issue K-2, done): a Genesis
 is validated before it is hashed, so an invalid parameter vector never gets
-a ChannelId. Real signatures are still a placeholder string (`sig`); M0 calls
-for signature stubs only (see ROADMAP.md milestone M0).
+a ChannelId. Real signing (`ucomm.signing`, M1) is a separate module so this
+one stays free of a crypto dependency; `sig` here is just the wire slot.
 
 Invariant (DESIGN.md section 9): this module must never import ucomm.attention.
 AttentionClaim is data; its evaluation lives entirely on the receiver side.
@@ -20,7 +20,7 @@ from .encoding import content_hash
 
 ChannelId = str
 EventHash = str
-PubKey = str
+PubKey = str  # signer's Ethereum-style address (see ucomm.signing), not a raw public key
 SwarmRef = str
 
 
@@ -180,7 +180,7 @@ class Envelope:
     payload: SwarmRef | None = None
     inline: bytes | None = None
     attention: AttentionClaim | None = None
-    sig: str = ""  # placeholder; M1 adds real signing over canonical bytes
+    sig: str = ""  # hex signature; see ucomm.signing.sign_envelope/verify_envelope
 
     def event_hash(self) -> EventHash:
         # NOTE for when real signing lands: this hashes `sig` along with

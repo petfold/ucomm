@@ -7,7 +7,8 @@ standalone libraries with their own repos once stable:
 
 | Module | Scope | Depends on | Standalone? |
 |---|---|---|---|
-| `ucomm.envelope` | envelope + genesis schema, canonical encoding, signatures | — | eventually (schema lib) |
+| `ucomm.envelope` | envelope + genesis schema, canonical encoding | — | eventually (schema lib) |
+| `ucomm.signing` | secp256k1 signing/verification (`sign_envelope`, `verify_envelope`) | envelope, `swarm-bee` | **yes** — a generic Bee-compatible envelope signer |
 | `ucomm.log` | per-author append-only channel logs | recordstore | no (thin adapter) |
 | `ucomm.rendezvous` | `Rendezvous` interface; InMemory / PSS-shim / GSOC impls | Bee API | no |
 | `ucomm.attention` | priority algebra + policy engine (pure functions + policy store) | envelope | **yes** — useful for any notification system |
@@ -34,6 +35,14 @@ this repo is M0's starting point.*
 Author logs on feeds (via recordstore where it fits); contact exchange
 (addresses + keys) out-of-band; two-party and small-group chat profile
 end-to-end; read-state receipts synced. No GSOC needed.
+
+- Real signing **done**: `ucomm.signing` (secp256k1 + Ethereum signed-message
+  digest via `bee.swarm.keys`, the same scheme Bee verifies SOC/feed
+  signatures against). `ChatChannel` now signs every send and verifies every
+  read instead of leaving `sig` a placeholder.
+- Still open: author logs actually on Swarm feeds (currently in-process
+  `AuthorLog`/`RecordStoreAuthorLog`, no network); out-of-band contact
+  exchange; read-state receipts.
 
 **M2 — daemon + universal inbox + first bridges.**
 Notification daemon with graded alerts and dashboard (active/obsolete);
