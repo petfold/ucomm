@@ -10,6 +10,7 @@ standalone libraries with their own repos once stable:
 | `ucomm.envelope` | envelope + genesis schema, canonical encoding | — | eventually (schema lib) |
 | `ucomm.signing` | secp256k1 signing/verification (`sign_envelope`, `verify_envelope`) | envelope, `swarm-bee` | **yes** — a generic Bee-compatible envelope signer |
 | `ucomm.log` | per-author append-only channel logs | recordstore | no (thin adapter) |
+| `ucomm.bee` | real Swarm feed backend for `RecordStoreAuthorLog` | recordstore's Bee extra | no (thin adapter) |
 | `ucomm.rendezvous` | `Rendezvous` interface; InMemory / PSS-shim / GSOC impls | Bee API | no |
 | `ucomm.attention` | priority algebra + policy engine (pure functions + policy store) | envelope | **yes** — useful for any notification system |
 | `identity-wot` | root keys, device delegation, petnames, attestations | Swarm feeds, ACT | **yes** — track Swarm ID work |
@@ -45,9 +46,15 @@ end-to-end; read-state receipts synced. No GSOC needed.
   hash carried as a small `inline` pointer (not `refs`, which stays reserved
   for ordering; CLAUDE.md invariant 3). `messages()` filters to MESSAGE kind
   only, so this was additive -- no existing test changed.
-- Still open: author logs actually on Swarm feeds (currently in-process
-  `AuthorLog`/`RecordStoreAuthorLog`, no network); out-of-band contact
-  exchange.
+- Author logs on real Swarm feeds **done**: `ucomm.bee.open_author_feed_log`
+  wires `RecordStoreAuthorLog` to recordstore's `BeeBytesStore` +
+  `SwarmFeedPointer` -- the "drop-in swap, not a rewrite" this promised,
+  confirmed live against a Bee 2.8.1 node (2026-07-26): a signed envelope
+  written through one process's log round-tripped, byte-identical and
+  signature-valid, through a second process opening the same feed cold.
+  `tests/test_bee_live.py` is opt-in (env-var gated; needs a reachable node
+  and a funded immutable postage batch) and skipped by default.
+- Still open: out-of-band contact exchange.
 
 **M2 — daemon + universal inbox + first bridges.**
 Notification daemon with graded alerts and dashboard (active/obsolete);

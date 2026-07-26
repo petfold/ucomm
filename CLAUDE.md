@@ -74,16 +74,24 @@ attention layer, universal inbox, discovery. Read `docs/DESIGN.md` first;
 - `src/ucomm/log.py` — `AuthorLog` + causal-DAG `merge_causal` (issue K-3,
   done).
 - `src/ucomm/store.py` — recordstore adapter, one envelope per record (issue
-  K-4, done). `recordstore` is now a real dependency (PyPI, pinned `>=0.11,
-  <0.12`).
+  K-4, done). `recordstore[bee]` is now a real dependency (PyPI, pinned
+  `>=0.11,<0.12`).
+- `src/ucomm/bee.py` — `open_author_feed_log` wires `RecordStoreAuthorLog` to
+  a real Swarm feed via recordstore's `BeeBytesStore`/`SwarmFeedPointer`
+  (M1, done). Confirmed live against a Bee 2.8.1 node: see memory
+  `bee_node_live_mainnet` for the node/stamp details — **that node is real
+  Gnosis Chain mainnet with real funds, not a testnet**; never buy a postage
+  batch against it without asking first. `tests/test_bee_live.py` is opt-in
+  (`UCOMM_BEE_API_URL` / `UCOMM_BEE_POSTAGE_BATCH_ID` env vars), skipped by
+  default so the normal suite stays offline.
 - `src/ucomm/profiles/chat.py` — chat profile: `chat_genesis`,
   `validate_chat_genesis`, and an in-process `ChatChannel` (issue K-8, done).
   `ChatChannel` takes member `PrivateKey`s and really signs/verifies every
   event. `mark_read`/`read_state` give synced read-state receipts (M1, done):
   RECEIPT envelopes on the same causal chain, acknowledged event hash carried
-  as a small `inline` pointer rather than in `refs`. Still no network — logs
-  are plain `AuthorLog`s; swapping in `RecordStoreAuthorLog` or a real feed,
-  plus out-of-band contact exchange, are the remaining M1 steps, not a rewrite.
+  as a small `inline` pointer rather than in `refs`. Still in-process
+  `AuthorLog`s, not wired to `ucomm.bee` yet — that swap plus out-of-band
+  contact exchange are the remaining M1 steps.
 - `docs/RECOMMENDATION.md` is v2: the prior decentralized-recsys
   conversation is merged (R-1 done). Key commitments: sequencing embeddings →
   import → open ingestion → native CF; bridges double as taste-signal
