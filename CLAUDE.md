@@ -70,6 +70,17 @@ attention layer, universal inbox, discovery. Read `docs/DESIGN.md` first;
   against a local node; keep it behind thin adapters.
 - Canonical encoding decisions must align with recordstore
   (github.com/petfold/recordstore) — ask before inventing encodings.
+- Never hand-roll cryptography or protocol/format parsing of untrusted
+  input. Use established, widely-used libraries: `coincurve`/`libsecp256k1`
+  via `swarm-bee` for everything signing-related so far; for bridges,
+  prefer a mature client library over the wire protocol (e.g. `IMAPClient`
+  for IMAP, not raw `imaplib`) and stdlib or equally mature parsers for
+  message formats (e.g. stdlib `email` for MIME) rather than a thinner or
+  home-grown parser. Where a bridge needs its own crypto (e.g. Nostr's
+  BIP-340 Schnorr, a different scheme from the ECDSA `ucomm.signing`
+  already uses), prefer a binding backed by a serious reference
+  implementation over a smaller pure-Python package, for the same reason
+  `coincurve` was the right call for secp256k1.
 - Related local projects that may be installed as dependencies later:
   recordstore (author-log persistence), swarmfs (payload blobs), mdl-fca /
   OntoDAG (recommendation layer, M4).
