@@ -149,7 +149,16 @@ attention layer, universal inbox, discovery. Read `docs/DESIGN.md` first;
   one, so a real backend can land later with zero changes to D-1..D-3. Which
   backend (Bee PSS, native GSOC pub/sub, Waku, an off-Swarm relay) is
   **deliberately not chosen yet** -- see DESIGN.md §5 and invariant 7.
-  Bridges (D-5/D-6) are the rest of what's left of M2.
+- `src/ucomm/profiles/mail.py` + `src/ucomm/bridges/imap.py` — IMAP
+  bridge's conversion layer (D-5, done): `mail_genesis`/
+  `validate_mail_genesis` (DESIGN.md §4's mail row) and
+  `envelope_from_email`/`invitation_for_email`, pure and offline-tested
+  against synthetic `email` messages. Bridged envelopes are deliberately
+  unsigned (`sig=""`) -- a bridge can't vouch for a foreign protocol's
+  authenticity, so `verify_envelope` on one is honestly always `False`.
+  Live IMAP fetch (a real mailbox via `IMAPClient`) is still open, same
+  split as K-4/`ucomm.bee`: logic ships and gets tested before the network
+  adapter. Nostr (D-6) is the rest of what's left of M2.
 - `docs/RECOMMENDATION.md` is v2: the prior decentralized-recsys
   conversation is merged (R-1 done). Key commitments: sequencing embeddings →
   import → open ingestion → native CF; bridges double as taste-signal

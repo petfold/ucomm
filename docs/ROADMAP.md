@@ -78,9 +78,10 @@ the **attention firewall** as standalone value.
 - Channel directory + graded dashboard **done** (D-1, D-2): `ucomm.daemon`.
   Read-state aggregation **done** (D-3). Hint-delivery interface **done**
   (D-4's abstraction; no real backend chosen yet, deliberately -- see D-4).
-  Still no network -- everything runs on plain in-memory data the caller
-  supplies; wiring a real backend behind D-4 and the first bridges (D-5,
-  D-6) are what's left of M2.
+  IMAP bridge's conversion layer **done** (D-5; live fetch loop still
+  open). Still no network for D-1..D-4 -- everything there runs on plain
+  in-memory data the caller supplies; wiring a real D-4 backend, IMAP's
+  live fetch loop, and the Nostr bridge (D-6) are what's left of M2.
 
 **M3 — rendezvous + spam economics.**
 GSOC mailboxes for unsolicited contact (or PSS shim if GSOC pub/sub not yet
@@ -179,7 +180,19 @@ Daemon/inbox (D):
   with nothing ever published to it is already a legitimate use, not a
   degraded one), and labeled interim with a stated revisit condition if
   it isn't the native path.
-- D-5 IMAP bridge
+- D-5 IMAP bridge -- **conversion layer done**: `ucomm.profiles.mail`
+  (`mail_genesis`/`validate_mail_genesis`, DESIGN.md §4's mail row: open
+  membership, write_policy=anyone -- unlike chat, no standing accept
+  needed, matching how real email works) and `ucomm.bridges.imap`
+  (`envelope_from_email`/`invitation_for_email`: pure, offline-tested with
+  synthetic `email` messages, no network). Bridged envelopes are
+  deliberately unsigned (`sig=""`) -- a bridge can't vouch for a foreign
+  protocol's authenticity, and pretending otherwise would be worse than
+  being honest that `verify_envelope` on one is always `False`. **Still
+  open**: the live fetch loop (a real mailbox via `IMAPClient`, per
+  CLAUDE.md's library convention) -- same split as K-4/`ucomm.bee` before
+  it: kernel-adjacent logic ships and gets tested before the network
+  adapter, not together.
 - D-6 Nostr bridge
 
 Recommendation (R) — sequencing per RECOMMENDATION.md §2: embeddings →
