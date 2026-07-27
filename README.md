@@ -53,10 +53,15 @@ signing (via `swarm-bee`) and out-of-band contact exchange; and a two-party/
 group chat profile exercising all of the above end-to-end, confirmed against
 a live Bee node. New here? Start with `docs/USER_GUIDE.md`.
 
-Next up is M2: a notification daemon, the universal inbox, and the first
-bridges (IMAP, Nostr). GSOC-based rendezvous (unsolicited contact, group
-discovery) stays behind the `Rendezvous` interface, pending the GSOC/pub-sub
-work by Viktor Tóth and Viktor Trón.
+**M2 (notification daemon + universal inbox) is in progress**: a private
+channel directory, a graded active/obsolete dashboard (a projection,
+recomputed on demand — never persisted), read-state aggregation across
+every channel, and a push/hint-delivery interface are done. Left: an
+actual hint backend and the first bridges (IMAP, Nostr) — see
+`docs/USER_GUIDE.md` sections 11–12 for the directory/dashboard/hints demo.
+GSOC-based rendezvous (unsolicited contact, group discovery) stays behind
+the `Rendezvous` interface, pending the GSOC/pub-sub work by Viktor Tóth
+and Viktor Trón.
 
 **On decentralization, read this before evaluating further:** everything
 above runs on Swarm feeds and needs no full node — a light client is

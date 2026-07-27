@@ -1,11 +1,12 @@
 # ucomm user guide
 
-A hands-on tour of `ucomm` as it stands today (milestones M0 and M1 —
-see `docs/ROADMAP.md`): the channel kernel, real signing, a working chat profile,
-the attention/policy engine, out-of-band contact exchange, and persistence
-either in memory or on a real Swarm feed. Every code block below has
-actually been run against the current code; the outputs shown are real,
-just trimmed where a hash would otherwise take up a full line.
+A hands-on tour of `ucomm` as it stands today (milestones M0, M1, and part
+of M2 — see `docs/ROADMAP.md`): the channel kernel, real signing, a working
+chat profile, the attention/policy engine, a channel directory with a
+graded dashboard, out-of-band contact exchange, and persistence either in
+memory or on a real Swarm feed. Every code block below has actually been
+run against the current code; the outputs shown are real, just trimmed
+where a hash would otherwise take up a full line.
 
 If you want the architecture and the reasoning behind it, read
 `docs/DESIGN.md` and `docs/ATTENTION.md`. This guide is the "just show me
@@ -18,9 +19,9 @@ it working" companion.
 - Internet access to PyPI, to install two small published dependencies
   (`recordstore`, `swarm-bee`) — both are real packages this project depends
   on, not local-only tools.
-- Nothing else is required for anything in sections 2–12 below: no Swarm
+- Nothing else is required for anything in sections 2–14 below: no Swarm
   node, no funds, no network calls except the one-time `pip install`.
-  Section 13 (real Swarm feed I/O) is the one part that needs a live Bee
+  Section 15 (real Swarm feed I/O) is the one part that needs a live Bee
   node and, to *write*, a funded postage batch — that section explains
   exactly what that means before you touch it.
 
@@ -47,12 +48,13 @@ pytest -q
 Expected: all tests pass except one skip —
 
 ```
-.......s................................................................ [100%]
-71 passed, 1 skipped in 1.5s
+.......s................................................................ [ 69%]
+................................                                         [100%]
+103 passed, 1 skipped in 1.8s
 ```
 
 The skip is `tests/test_bee_live.py`, which only runs against a real Bee
-node (section 13). Everything else is fully offline.
+node (section 15). Everything else is fully offline.
 
 Two more checks worth knowing about, both clean on a fresh checkout:
 
@@ -118,6 +120,34 @@ parameter vector distinct — always give it something unique (a random
 string, a timestamp, whatever). Two calls with the same nonce and fields
 produce the same `channel_id`; that's the point — it's a pure function of
 the genesis's content, not a random UUID.
+
+**Disappearing messages, Signal-style:** `persistence=EPHEMERAL` is a
+category (crypto-shredding happens on *some* schedule); pair it with
+`ephemeral_ttl_seconds` to make that schedule an actual configurable
+duration, set per channel like every other genesis parameter:
+
+```python
+ephemeral_genesis = Genesis(
+    membership=Membership.INVITE, media=(MediaKind.TEXT,),
+    persistence=Persistence.EPHEMERAL, privacy=Privacy.E2EE,
+    ordering=Ordering.CAUSAL_DAG, write_policy=WritePolicy.MEMBERS,
+    ephemeral_ttl_seconds=86400,   # one day
+    nonce="ephemeral-example",
+)
+ephemeral_genesis.channel_id()   # validates fine
+
+Genesis(
+    membership=Membership.INVITE, media=(MediaKind.TEXT,),
+    persistence=Persistence.PERMANENT, privacy=Privacy.E2EE,
+    ordering=Ordering.CAUSAL_DAG, write_policy=WritePolicy.MEMBERS,
+    ephemeral_ttl_seconds=86400, nonce="y",
+).channel_id()
+# raises GenesisError: ephemeral_ttl_seconds only applies to ephemeral persistence
+```
+
+Same caveat as ever with "ephemeral" on an immutable, replicated network
+(DESIGN.md §8): this is a schedule for *key destruction*, not a promise
+that data is deleted — ciphertext persists while stamps are funded either way.
 
 ## 6. Envelopes and content hashing
 
@@ -203,7 +233,7 @@ delivered twice.
 
 This is the flagship demo: a real two-party chat, with real signing, real
 verification on every read, and synced read-state receipts — no network
-involved yet (that's section 13).
+involved yet (that's section 15).
 
 ```python
 from ucomm.profiles.chat import ChatChannel, chat_genesis
@@ -245,8 +275,8 @@ A few things worth noticing:
   messages, but `messages()` filters to `MESSAGE` kind only — receipts
   never show up as chat content, only in `read_state()`.
 - Everything here lives in an in-process `AuthorLog` per member. Section
-  12 shows the same shape of object (`RecordStoreAuthorLog`) persisted,
-  and section 13 shows it backed by a real Swarm feed.
+  14 shows the same shape of object (`RecordStoreAuthorLog`) persisted,
+  and section 15 shows it backed by a real Swarm feed.
 
 ## 10. The attention / policy engine
 
@@ -290,7 +320,121 @@ is a pure function of `(envelope, sender context, policy state, clock)` —
 same inputs, same `Decision`, always; all the mutable state (ceilings,
 offsets, thresholds) lives in `PolicyState`, which you own.
 
-## 11. Out-of-band contact exchange
+## 11. The channel directory and graded dashboard (M2)
+
+`decide()` grades one invitation at a time. The **daemon** (M2, in
+progress) rolls that up across every channel you're in into one graded
+view — active requests ordered by priority, plus an obsolete timeline for
+ones whose relevance window has passed. Reusing the two invitations from
+section 10:
+
+```python
+from ucomm.daemon import ChannelDirectory, DirectoryEntry, build_dashboard
+
+directory = ChannelDirectory()
+directory.add(DirectoryEntry(channel=channel_id))
+
+channel_events = {channel_id: [smoke_from_house, tennis_schedule]}
+dashboard = build_dashboard(directory, channel_events, policy, {alice: known}, NOW)
+
+for item in dashboard.active:
+    print(item.decision.intensity.name, item.decision.effective_priority)
+# FULL 40
+# FILED 4
+print(dashboard.obsolete)
+# ()
+```
+
+Both show up in `active` — even the `FILED` one, since it's still within
+its relevance window, just not loud about it (DESIGN.md §10: the dashboard
+includes sub-threshold requests, silently filed, not just the noisy ones).
+
+Muting is a large negative `channel_offset` on the directory entry, not a
+separate on/off flag — it suppresses without making anything obsolete:
+
+```python
+muted_directory = ChannelDirectory()
+muted_directory.add(DirectoryEntry(channel=channel_id, channel_offset=-100))
+muted_policy = PolicyState(threshold=20, channel_offsets=muted_directory.channel_offsets)
+muted_dashboard = build_dashboard(muted_directory, channel_events, muted_policy, {alice: known}, NOW)
+print([item.decision.intensity.name for item in muted_dashboard.active])
+# ['FILED', 'FILED']
+print(len(muted_dashboard.active), len(muted_dashboard.obsolete))
+# 2 0
+```
+
+And relevance expiry is checked directly, not inferred from `decide()`'s
+internal encoding — an expired invitation moves to `obsolete`, never
+interrupting on its way out:
+
+```python
+expired = Envelope(
+    channel=channel_id, author=alice, seq=3, kind=EventKind.INVITATION,
+    attention=AttentionClaim(importance=5, urgency=25,
+                             relevance=TimeWindow(start=NOW - 7200, end=NOW - 1)),
+)
+channel_events[channel_id].append(expired)
+dashboard2 = build_dashboard(directory, channel_events, policy, {alice: known}, NOW)
+print(len(dashboard2.active), len(dashboard2.obsolete))
+# 2 1
+```
+
+Two things worth knowing about `build_dashboard`: it's a **projection, not
+authoritative state** — call it fresh whenever you need it; never persist
+or sync the result (this is the resolution to DESIGN.md §12's open
+question, and follows the same discipline `decide()`'s own output already
+does). And the `ChannelDirectory` itself is the opposite — it's the one
+piece of daemon state that *is* authoritative, since it's curated by you,
+not derivable from anything else.
+
+## 12. Read-state aggregation and push hints (M2)
+
+`ChatChannel.read_state()` (section 9) gives you one channel's read state.
+The daemon needs it across *every* channel in your directory, regardless
+of profile — possible because a `RECEIPT`'s meaning (acknowledged event
+hash, as `inline`) is a kernel convention (`ucomm.log.read_state`), not a
+chat-profile one:
+
+```python
+from ucomm.daemon import directory_read_state
+
+receipt = Envelope(channel=channel_id, author=alice, seq=10, kind=EventKind.RECEIPT,
+                    inline=smoke_from_house.event_hash().encode("ascii"))
+read_events = {channel_id: [receipt]}
+print(directory_read_state(directory, read_events))
+# {'529e0430...': {'19e7e376...': '680b6327...'}}
+```
+
+One entry per channel in the directory, each mapping author → the latest
+event they've acknowledged — with a real directory (many channels) this is
+one call that tells you what's unread everywhere, not N per-channel calls.
+
+Separately, `ucomm.hints` is the interface for push/hint delivery — "channel
+X changed, maybe look sooner" — deliberately with no real backend chosen
+yet (CLAUDE.md invariant 7; DESIGN.md §5 weighs the candidates: Bee-native
+PSS, native GSOC pub/sub, Waku, an off-Swarm relay). The whole interface:
+
+```python
+from ucomm.hints import InMemoryHints
+
+hints = InMemoryHints()
+hints.publish(channel_id)
+hints.publish(channel_id)   # repeats collapse -- a hint carries no
+                            # information beyond "something happened here"
+print(hints.poll())
+# ['529e0430...']
+print(hints.poll())
+# []
+```
+
+Nothing above — `build_dashboard`, `directory_read_state`, the chat
+profile — ever consults a `HintSource`. That's deliberate: a hint is a
+pure optimization for *how soon* you notice something, never something
+correctness depends on. Polling directly, with `InMemoryHints` publishing
+nothing to poll, is already a complete, legitimate way to run all of this —
+not a degraded fallback while waiting for a "real" backend.
+
+## 13. Out-of-band contact exchange
 
 Before any channel exists, `ContactCard` lets you hand someone an address
 they can verify actually corresponds to a key someone controls — useful
@@ -318,11 +462,11 @@ can never be replayed as an envelope signature or vice versa. It proves
 control of the address, not who the person is — matching a name to it is a
 local petname decision, never something the card itself asserts.
 
-## 12. Persistence: recordstore-backed logs (still offline)
+## 14. Persistence: recordstore-backed logs (still offline)
 
 `RecordStoreAuthorLog` gives the same log interface as `AuthorLog`, but
 backed by `recordstore` — meaning it can survive a process restart, and
-(section 13) can be pointed at a real Swarm feed with no code changes.
+(section 15) can be pointed at a real Swarm feed with no code changes.
 This example uses `recordstore`'s in-memory backend, so it's still fully
 offline:
 
@@ -342,7 +486,7 @@ print(list(reopened_log) == [signed])
 # True
 ```
 
-## 13. Optional: real Swarm feed I/O
+## 15. Optional: real Swarm feed I/O
 
 This section needs a Bee node you can reach over HTTP, and, to publish
 anything, a **funded, usable, immutable postage batch** on it. Read this
@@ -392,7 +536,7 @@ dependency, so not assumed here.)
 
 With a usable batch id in hand, `ucomm.bee` wires a real log straight onto
 a Swarm feed — the exact same `RecordStoreAuthorLog` interface as section
-12, just backed by the network instead of memory:
+14, just backed by the network instead of memory:
 
 ```python
 import os
@@ -433,7 +577,7 @@ It's skipped automatically if those environment variables aren't set,
 which is why the normal `pytest` run in section 3 doesn't touch the
 network at all.
 
-## 14. Development workflow
+## 16. Development workflow
 
 ```bash
 pytest -q               # full offline suite
@@ -444,7 +588,7 @@ ruff check src tests     # linting; `--fix` for the auto-fixable ones
 All three are clean on `main`. If you're adding something, keep them that
 way — CI-equivalent hygiene, even though there's no CI configured yet.
 
-## 15. Where to go next
+## 17. Where to go next
 
 - `docs/DESIGN.md` — the full architecture: two planes, the channel kernel,
   profiles, transports, identity, encryption.
@@ -452,7 +596,9 @@ way — CI-equivalent hygiene, even though there's no CI configured yet.
   plus the incentive mechanisms (bonds, reputation) not yet built.
 - `docs/ROADMAP.md` — module map, milestones, and the open issue list. M0
   and M1 are done; M2 (notification daemon, universal inbox, first
-  bridges) is next.
+  bridges) is in progress: directory, dashboard, read-state aggregation,
+  and the hint-delivery interface are done (sections 11–12 above); a real
+  hint backend and the first bridges (IMAP, Nostr) are what's left.
 - `CLAUDE.md` — the invariants this codebase won't violate without a
   design discussion first, and the current-state summary kept in sync with
   every change.
