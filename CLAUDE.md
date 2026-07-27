@@ -30,6 +30,19 @@ attention layer, universal inbox, discovery. Read `docs/DESIGN.md` first;
    combinations.
 6. **Ephemeral = crypto-shredding.** Never present ephemerality as data
    deletion; Swarm content persists while stamps are funded.
+7. **No silent permanent dependencies.** Plan assuming full nodes and
+   native GSOC/PSS pub/sub will *never* mature — treat any improvement
+   there as upside, not something the plan depends on (2026-07-27, Peter,
+   prompted by Levik's full-node-uptime question). Any interim/off-Swarm
+   component filling a gap in the meantime (e.g. ntfy or similar as a
+   hint-delivery relay while D-4 has no native path) must: (a) sit behind
+   the same swappable interface the eventual native solution would use,
+   never hardcoded as *the* answer; (b) never become required for baseline
+   functionality — a zero-relay, poll-only path must always fully work;
+   (c) be labeled interim in the doc that introduces it, with the
+   condition under which it should be revisited. "Temporary" fixes that
+   quietly become permanent are exactly the failure mode this exists to
+   block.
 
 ## Swarm facts to respect (verified against Bee 2.8.x docs)
 

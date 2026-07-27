@@ -200,6 +200,47 @@ of a fully working baseline, not a structural requirement to use any of
 this, but it's the honest ceiling on how decentralized the *fast* path can
 be until Swarm's own light-client story for PSS/GSOC changes.
 
+Uptime specifically: a relay only needs to be up to deliver the *push*
+promptly — content itself persists on the network's actual full nodes
+regardless of whether your chosen relay was online when it landed, so a
+relay outage costs latency (fall back to polling), not data. That said,
+"run your own full node" was never a realistic claim about phones or
+laptops — both have exactly the availability pattern (battery/mobility,
+routine suspend-and-close) that makes them poor full-node hosts. Read
+literally, it only ever meant a small dedicated always-on box. Honest
+prediction, not a hopeful one: most users will end up on a household node
+or a paid relay service, not one they personally run — the same shape
+every DHT-based P2P system with a routing/storage role has landed on (Tor
+relays, IPFS, Lightning routing nodes). That's not a ucomm-specific
+failure; it's inherited, and bounded to this one layer.
+
+**Planning stance (CLAUDE.md invariant 7): design as if full nodes and
+native GSOC/PSS pub/sub never mature.** Not pessimism — a discipline
+against quietly depending on either. Candidates for the D-4 hint path
+should be considered on that basis:
+
+- **Bee-native PSS**, once a subscriber's full-node arrangement exists —
+  the "in-stack" answer, no second protocol, but inherits every constraint
+  above.
+- **Native GSOC pub/sub** (Tóth, Trón; ROADMAP issue N-2) is Swarm's own
+  attempt at solving exactly this — the reason the design tracks it rather
+  than reaching outside Swarm. It's still in progress, and there's no
+  reason to expect it eliminates the uptime tension rather than just
+  keeping it Swarm-native — the question it answers is *whose stack*, not
+  *whether someone has to stay online*.
+- **Waku** solves the light-client-push gap directly (its `filter`/
+  `light-push` protocols exist for exactly this) but is additive, not
+  substitutive, complexity: no persistence of its own (Swarm is still
+  needed underneath), a second bootstrap/liveness model, and its own
+  on-chain RLN membership economics on top of everything already invested
+  in Bee specifically. Solves the gap by doubling the stack.
+- **A lightweight off-Swarm pub/sub service** (e.g. ntfy) is the simplest
+  option and a legitimate interim D-4 backend — but only under invariant
+  7's guardrails: behind the same swappable interface a native path would
+  use, never required for baseline (poll-only must always fully work), and
+  labeled interim with its revisit condition, not adopted as *the* answer
+  because it was the easiest one available.
+
 ## 6. Rendezvous
 
 Everything among known contacts runs today on feeds + PSS: each party learns the

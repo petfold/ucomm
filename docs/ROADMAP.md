@@ -149,10 +149,16 @@ Daemon/inbox (D):
   `EventKind` and every profile using it should mean the same thing by it --
   `ChatChannel.read_state` now calls the shared function instead of
   duplicating it)
-- D-4 PSS hint path via a full node (the daemon's actual "runs
-  continuously, learns about new events without polling everything"
-  half -- `build_dashboard` takes channel events as a plain mapping today,
-  supplied however the caller likes)
+- D-4 Push/hint delivery path (the daemon's actual "runs continuously,
+  learns about new events without polling everything" half --
+  `build_dashboard` takes channel events as a plain mapping today, supplied
+  however the caller likes, so nothing about D-1..D-3 assumes any of the
+  below). Candidates, weighed in DESIGN.md §5: Bee-native PSS; native GSOC
+  pub/sub (N-2) once it lands; Waku (solves it, but doubles the stack);
+  a lightweight off-Swarm relay (e.g. ntfy) as an interim option. **Whichever
+  is picked, CLAUDE.md invariant 7 applies**: swappable, never required for
+  baseline (poll-only stays fully functional forever), and labeled interim
+  with a stated revisit condition if it isn't the native path.
 - D-5 IMAP bridge
 - D-6 Nostr bridge
 
