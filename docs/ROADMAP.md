@@ -142,9 +142,13 @@ Daemon/inbox (D):
   (`ucomm.daemon.build_dashboard`: pure projection over directory + channel
   events + policy + clock; resolves DESIGN.md §12's open question -- never
   persisted, always recomputed, same discipline as `decide()`)
-- D-3 Daemon-level read-state aggregation across the whole directory (the
-  chat profile's `mark_read`/`read_state` exist per-channel, K-8; rolling
-  that up across every channel a user is in is still open)
+- D-3 ~~Daemon-level read-state aggregation across the whole directory~~
+  **done** (`ucomm.daemon.directory_read_state`; the underlying `RECEIPT`
+  interpretation moved from a chat-profile convention to
+  `ucomm.log.read_state`, a kernel-level one, since `RECEIPT` is a kernel
+  `EventKind` and every profile using it should mean the same thing by it --
+  `ChatChannel.read_state` now calls the shared function instead of
+  duplicating it)
 - D-4 PSS hint path via a full node (the daemon's actual "runs
   continuously, learns about new events without polling everything"
   half -- `build_dashboard` takes channel events as a plain mapping today,

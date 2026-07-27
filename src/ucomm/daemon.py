@@ -19,7 +19,8 @@ from collections.abc import Iterable, Iterator, Mapping
 from dataclasses import dataclass
 
 from .attention import Decision, PolicyState, SenderContext, decide
-from .envelope import ChannelId, Envelope, EventKind, PubKey
+from .envelope import ChannelId, Envelope, EventHash, EventKind, PubKey
+from .log import merge_causal, read_state
 
 
 @dataclass(frozen=True)
@@ -103,13 +104,17 @@ def build_dashboard(
     material -- ordinary messages aren't "requests" in DESIGN.md section 10's
     sense and are silently skipped, matching `decide()`'s own treatment of
     them (a trivial FILED sentinel) rather than cluttering the timeline.
+
+    Callers pass unmerged events (e.g. every member's raw log); each
+    channel's stream is merged internally, so a duplicate delivery or an
+    event reachable through two members' logs is counted once, not twice.
     """
     unknown_ctx = default_sender_context or SenderContext(known_contact=False)
     active: list[DashboardItem] = []
     obsolete: list[DashboardItem] = []
 
     for entry in directory:
-        for env in channel_events.get(entry.channel, ()):
+        for env in merge_causal(channel_events.get(entry.channel, ())):
             if env.kind is not EventKind.INVITATION or env.attention is None:
                 continue
             ctx = sender_contexts.get(env.author, unknown_ctx)
@@ -121,3 +126,24 @@ def build_dashboard(
 
     active.sort(key=lambda item: item.decision.effective_priority, reverse=True)
     return Dashboard(active=tuple(active), obsolete=tuple(obsolete))
+
+
+def directory_read_state(
+    directory: ChannelDirectory,
+    channel_events: Mapping[ChannelId, Iterable[Envelope]],
+) -> dict[ChannelId, dict[PubKey, EventHash]]:
+    """Read-state (`ucomm.log.read_state`) for every channel in the
+    directory, rolled up into one view (issue D-3).
+
+    `ucomm.profiles.chat.ChatChannel.read_state` already does this for one
+    channel; the daemon needs it across every channel a user is in,
+    regardless of profile -- possible without profile-specific code because
+    `RECEIPT`'s meaning (`ucomm.log.read_state`'s docstring) is a kernel
+    convention, not a chat-profile one. Callers pass unmerged events; each
+    channel's stream is merged internally so callers don't have to remember
+    to do it themselves.
+    """
+    return {
+        entry.channel: read_state(merge_causal(channel_events.get(entry.channel, ())))
+        for entry in directory
+    }

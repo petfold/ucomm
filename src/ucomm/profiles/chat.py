@@ -29,7 +29,7 @@ from ..envelope import (
     PubKey,
     WritePolicy,
 )
-from ..log import AuthorLog, merge_causal
+from ..log import AuthorLog, merge_causal, read_state
 from ..signing import InvalidSignature, address_of, sign_envelope, verify_envelope
 
 
@@ -136,8 +136,4 @@ class ChatChannel:
 
     def read_state(self) -> dict[PubKey, EventHash]:
         """Latest event hash each member has acknowledged (last receipt wins)."""
-        state: dict[PubKey, EventHash] = {}
-        for env in self._verified_events():
-            if env.kind is EventKind.RECEIPT and env.inline is not None:
-                state[env.author] = env.inline.decode("ascii")
-        return state
+        return read_state(self._verified_events())

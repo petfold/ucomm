@@ -18,7 +18,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable, Iterator
 
-from .envelope import Envelope, EventHash
+from .envelope import Envelope, EventHash, EventKind, PubKey
 
 
 class AuthorLog:
@@ -74,3 +74,27 @@ def merge_causal(envelopes: Iterable[Envelope]) -> list[Envelope]:
         for h in ready:
             ordered.append(remaining.pop(h))
     return ordered
+
+
+def read_state(events: Iterable[Envelope]) -> dict[PubKey, EventHash]:
+    """Latest event hash each author has acknowledged, from `RECEIPT` events.
+
+    This is the kernel-level convention for DESIGN.md section 10's "read-
+    state is a synced event kind": a `RECEIPT`'s `inline` is the hex-encoded
+    hash of the event it acknowledges (a small pointer, not payload data --
+    CLAUDE.md invariant 3). It's a kernel convention rather than a chat-
+    profile one because `RECEIPT` is a kernel `EventKind`, not something a
+    profile defines; any profile using `RECEIPT` should mean the same thing
+    by it, which is what lets `ucomm.daemon` aggregate read-state across
+    every channel in the directory regardless of profile (issue D-3).
+
+    Doesn't require the input to be merge-ordered -- last write by `seq`
+    would need ordering, but "last receipt wins" here just means the last
+    one encountered in `events`, so callers pass already-merged events
+    (`merge_causal`'s output) to get the actually-latest acknowledgment.
+    """
+    state: dict[PubKey, EventHash] = {}
+    for env in events:
+        if env.kind is EventKind.RECEIPT and env.inline is not None:
+            state[env.author] = env.inline.decode("ascii")
+    return state

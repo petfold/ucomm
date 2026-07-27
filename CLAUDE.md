@@ -81,7 +81,10 @@ attention layer, universal inbox, discovery. Read `docs/DESIGN.md` first;
 - `src/ucomm/rendezvous.py` — `Rendezvous` interface + `InMemoryRendezvous`
   (issue K-5, done for its intended M0/M1 scope; PSS shim still open).
 - `src/ucomm/log.py` — `AuthorLog` + causal-DAG `merge_causal` (issue K-3,
-  done).
+  done). `read_state` (issue D-3, done) is the kernel-level convention for
+  what a `RECEIPT`'s `inline` means (hex hash of the acknowledged event) --
+  kernel-level because `RECEIPT` is a kernel `EventKind`, not a chat-profile
+  one, so every profile using it should agree on its meaning.
 - `src/ucomm/store.py` — recordstore adapter, one envelope per record (issue
   K-4, done). `recordstore[bee]` is now a real dependency (PyPI, pinned
   `>=0.11,<0.12`).
@@ -110,10 +113,12 @@ attention layer, universal inbox, discovery. Read `docs/DESIGN.md` first;
   petname/label field, since DESIGN.md section 7 keeps those strictly local.
   **M1 is now feature-complete** per ROADMAP.md's milestone description.
 - `src/ucomm/daemon.py` — M2 started: `ChannelDirectory`/`DirectoryEntry`
-  (D-1, done) and `build_dashboard` (D-2, done), resolving DESIGN.md §12's
-  open question (dashboard is a projection, never persisted). No network
-  yet -- channel events are a plain mapping the caller supplies; PSS hints
-  (D-4) and bridges (D-5/D-6) are the still-open, network-touching half.
+  (D-1, done), `build_dashboard` (D-2, done, resolving DESIGN.md §12's open
+  question -- dashboard is a projection, never persisted), and
+  `directory_read_state` (D-3, done: rolls up `ucomm.log.read_state` across
+  every channel in the directory). No network yet -- channel events are a
+  plain mapping the caller supplies; PSS hints (D-4) and bridges (D-5/D-6)
+  are the still-open, network-touching half.
 - `docs/RECOMMENDATION.md` is v2: the prior decentralized-recsys
   conversation is merged (R-1 done). Key commitments: sequencing embeddings →
   import → open ingestion → native CF; bridges double as taste-signal

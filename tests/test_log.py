@@ -6,7 +6,7 @@ import pytest
 from hypothesis import given
 from hypothesis import strategies as st
 
-from ucomm import AuthorLog, Envelope, EventKind, merge_causal
+from ucomm import AuthorLog, Envelope, EventKind, merge_causal, read_state
 
 CHANNEL = "ch"
 
@@ -69,3 +69,37 @@ def test_merge_deterministic_regardless_of_arrival_order():
 def test_merge_ready_set_ordering_is_deterministic(n_authors, n_per_author):
     events = _dag(n_authors, n_per_author)
     assert merge_causal(events) == merge_causal(list(reversed(events)))
+
+
+def _receipt(author: str, acked: str, seq: int = 1) -> Envelope:
+    return Envelope(channel=CHANNEL, author=author, seq=seq, kind=EventKind.RECEIPT,
+                     inline=acked.encode("ascii"))
+
+
+def test_read_state_empty_events():
+    assert read_state([]) == {}
+
+
+def test_read_state_ignores_non_receipt_events():
+    msg = Envelope(channel=CHANNEL, author="alice", seq=1, kind=EventKind.MESSAGE)
+    assert read_state([msg]) == {}
+
+
+def test_read_state_ignores_receipt_without_inline():
+    bare = Envelope(channel=CHANNEL, author="alice", seq=1, kind=EventKind.RECEIPT)
+    assert read_state([bare]) == {}
+
+
+def test_read_state_maps_author_to_acked_hash():
+    r = _receipt("alice", "deadbeef")
+    assert read_state([r]) == {"alice": "deadbeef"}
+
+
+def test_read_state_last_receipt_in_iteration_order_wins():
+    receipts = [_receipt("alice", "hash1", seq=1), _receipt("alice", "hash2", seq=2)]
+    assert read_state(receipts) == {"alice": "hash2"}
+
+
+def test_read_state_tracks_multiple_authors_independently():
+    receipts = [_receipt("alice", "hashA"), _receipt("bob", "hashB")]
+    assert read_state(receipts) == {"alice": "hashA", "bob": "hashB"}

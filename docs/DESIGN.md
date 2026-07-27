@@ -237,7 +237,10 @@ modules with a one-way dependency.
   notifications. Apps register as renderers for profiles; they never touch the
   OS notification system directly.
 - **Read-state is a synced event kind**: receipts written to a personal state
-  log, so reading in one client clears everywhere.
+  log, so reading in one client clears everywhere. `RECEIPT`'s meaning (the
+  acknowledged event's hash, as a small `inline` pointer) is a kernel-level
+  convention (`ucomm.log.read_state`, issue D-3), not a chat-profile one --
+  it has to be, for the daemon to aggregate it across every profile.
 - **Relevance expiry is enforced**: expired invitations drop from the active
   dashboard to the obsolete timeline without ever demanding attention.
 - The dashboard is Attila's: active requests ordered by effective priority

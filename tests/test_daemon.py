@@ -11,6 +11,7 @@ from ucomm import (
     SenderContext,
     TimeWindow,
     build_dashboard,
+    directory_read_state,
 )
 
 NOW = 1_000_000.0
@@ -28,6 +29,11 @@ def invitation(channel, importance, urgency, seq=1, window=WINDOW, sender="alice
 
 def message(channel, seq=1, sender="alice"):
     return Envelope(channel=channel, author=sender, seq=seq, kind=EventKind.MESSAGE)
+
+
+def receipt(channel, acked, seq=1, sender="alice"):
+    return Envelope(channel=channel, author=sender, seq=seq, kind=EventKind.RECEIPT,
+                     inline=acked.encode("ascii"))
 
 
 def test_empty_directory_gives_empty_dashboard():
@@ -135,3 +141,38 @@ def test_dashboard_is_recomputed_not_cached():
     dash2 = build_dashboard(directory, events, policy, {"alice": KNOWN}, NOW)
     assert len(dash1.active) == 1
     assert dash2.active == ()
+
+
+def test_directory_read_state_aggregates_across_channels():
+    directory = ChannelDirectory()
+    directory.add(DirectoryEntry(channel="ch1"))
+    directory.add(DirectoryEntry(channel="ch2"))
+    events = {
+        "ch1": [receipt("ch1", "hash1", sender="alice")],
+        "ch2": [receipt("ch2", "hash2", sender="bob")],
+    }
+    assert directory_read_state(directory, events) == {
+        "ch1": {"alice": "hash1"},
+        "ch2": {"bob": "hash2"},
+    }
+
+
+def test_directory_read_state_ignores_channels_outside_directory():
+    directory = ChannelDirectory()
+    directory.add(DirectoryEntry(channel="ch1"))
+    events = {"ch1": [], "ch2": [receipt("ch2", "hash2")]}
+    assert directory_read_state(directory, events) == {"ch1": {}}
+
+
+def test_directory_read_state_empty_channel_gives_empty_map():
+    directory = ChannelDirectory()
+    directory.add(DirectoryEntry(channel="ch1"))
+    assert directory_read_state(directory, {}) == {"ch1": {}}
+
+
+def test_directory_read_state_dedupes_via_merge_causal():
+    directory = ChannelDirectory()
+    directory.add(DirectoryEntry(channel="ch1"))
+    r = receipt("ch1", "hash1", sender="alice")
+    events = {"ch1": [r, r]}  # delivered twice, e.g. seen via two member logs
+    assert directory_read_state(directory, events) == {"ch1": {"alice": "hash1"}}
