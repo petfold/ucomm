@@ -275,17 +275,12 @@ breakdown rather than treating it as one bridge-shaped task.
 
 ## 12. Open questions
 
-- **Is daemon dashboard state (§10) authoritative or a projection?** The
-  truth-vs-projection discipline (RECOMMENDATION.md §3, generalizing
-  CLAUDE.md invariant 4 beyond `ucomm.attention.decide`) says any
-  locally-derived view should be a disposable, regenerable projection over
-  authoritative signals, never itself synced or treated as source. The
-  dashboard's active/obsolete split is exactly this kind of derived view —
-  computable at any time from the channel logs plus `PolicyState` and the
-  clock, with no information the source doesn't already have. If that
-  holds, the dashboard should never be persisted/synced as its own state:
-  a device rebuilds it locally, the same way `Decision` is never stored.
-  Worth confirming once M2 actually scopes the daemon (not decided here,
-  since M2 hasn't started) — but noting it now while the parallel to
-  `Decision` is fresh, so M2's design doesn't quietly reinvent authoritative
-  dashboard state and violate a principle already settled elsewhere.
+- ~~Is daemon dashboard state (§10) authoritative or a projection?~~
+  **Resolved** (issue D-2): it's a projection, same discipline as
+  `ucomm.attention.decide`. `ucomm.daemon.build_dashboard` is a pure
+  function of `(directory, channel events, policy, sender contexts, clock)`
+  — never persisted or synced, recomputed on demand. The private
+  **channel directory** itself (§10, issue D-1) is the one piece of daemon
+  state that stays authoritative, not a projection — it's curated by the
+  user, not derivable from anything else (RECOMMENDATION.md §3's carve-out
+  for exactly this kind of data applies here too).

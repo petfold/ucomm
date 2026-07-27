@@ -109,6 +109,11 @@ attention layer, universal inbox, discovery. Read `docs/DESIGN.md` first;
   keys, device delegation, petnames — standalone, tracks "Swarm ID"); no
   petname/label field, since DESIGN.md section 7 keeps those strictly local.
   **M1 is now feature-complete** per ROADMAP.md's milestone description.
+- `src/ucomm/daemon.py` — M2 started: `ChannelDirectory`/`DirectoryEntry`
+  (D-1, done) and `build_dashboard` (D-2, done), resolving DESIGN.md §12's
+  open question (dashboard is a projection, never persisted). No network
+  yet -- channel events are a plain mapping the caller supplies; PSS hints
+  (D-4) and bridges (D-5/D-6) are the still-open, network-touching half.
 - `docs/RECOMMENDATION.md` is v2: the prior decentralized-recsys
   conversation is merged (R-1 done). Key commitments: sequencing embeddings →
   import → open ingestion → native CF; bridges double as taste-signal

@@ -75,6 +75,11 @@ Notification daemon with graded alerts and dashboard (active/obsolete);
 channel directory; PSS hint path via a full node; IMAP and Nostr bridges —
 the **attention firewall** as standalone value.
 
+- Channel directory + graded dashboard **done** (D-1, D-2): `ucomm.daemon`.
+  No network yet -- `build_dashboard` takes channel events as a plain
+  mapping; wiring that to real polling/PSS hints (D-4) is the daemon's
+  actual "runs continuously" half, still open.
+
 **M3 — rendezvous + spam economics.**
 GSOC mailboxes for unsolicited contact (or PSS shim if GSOC pub/sub not yet
 landed); postage-floor enforcement; attention bonds contract on Gnosis Chain
@@ -127,6 +132,25 @@ Attention (A):
 - A-3 Reputation ratchet control loop: dynamics + defaults
 - A-4 RLN applicability study for GSOC mailboxes
 - A-5 Log-unit calibration: dogfooding protocol for defaults
+
+Daemon/inbox (D):
+- D-1 ~~Channel directory~~ **done** (`ucomm.daemon.ChannelDirectory`/
+  `DirectoryEntry`: local, unsigned, single-writer; `channel_offsets`
+  property feeds a `PolicyState` directly -- mute is a large negative
+  offset, not a separate field, per ATTENTION.md §2)
+- D-2 ~~Notification daemon core: graded dashboard~~ **done**
+  (`ucomm.daemon.build_dashboard`: pure projection over directory + channel
+  events + policy + clock; resolves DESIGN.md §12's open question -- never
+  persisted, always recomputed, same discipline as `decide()`)
+- D-3 Daemon-level read-state aggregation across the whole directory (the
+  chat profile's `mark_read`/`read_state` exist per-channel, K-8; rolling
+  that up across every channel a user is in is still open)
+- D-4 PSS hint path via a full node (the daemon's actual "runs
+  continuously, learns about new events without polling everything"
+  half -- `build_dashboard` takes channel events as a plain mapping today,
+  supplied however the caller likes)
+- D-5 IMAP bridge
+- D-6 Nostr bridge
 
 Recommendation (R) — sequencing per RECOMMENDATION.md §2: embeddings →
 personal import → open-graph ingestion → native CF. R-6 has the fewest
