@@ -11,6 +11,7 @@ from .daemon import (
     directory_read_state,
 )
 from .envelope import AttentionClaim, Envelope, EventKind, Genesis, GenesisError, TimeWindow
+from .hints import HintSink, HintSource, InMemoryHints
 from .log import AuthorLog, merge_causal, read_state
 from .rendezvous import InMemoryRendezvous, Rendezvous
 from .signing import InvalidSignature, address_of, sign_envelope, verify_envelope
@@ -29,6 +30,9 @@ __all__ = [
     "EventKind",
     "Genesis",
     "GenesisError",
+    "HintSink",
+    "HintSource",
+    "InMemoryHints",
     "InMemoryRendezvous",
     "Intensity",
     "InvalidSignature",

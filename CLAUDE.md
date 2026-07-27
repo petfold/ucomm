@@ -130,8 +130,15 @@ attention layer, universal inbox, discovery. Read `docs/DESIGN.md` first;
   question -- dashboard is a projection, never persisted), and
   `directory_read_state` (D-3, done: rolls up `ucomm.log.read_state` across
   every channel in the directory). No network yet -- channel events are a
-  plain mapping the caller supplies; PSS hints (D-4) and bridges (D-5/D-6)
-  are the still-open, network-touching half.
+  plain mapping the caller supplies.
+- `src/ucomm/hints.py` — push/hint delivery abstraction (D-4's interface,
+  done): `HintSink`/`HintSource` Protocols + `InMemoryHints`, same shape as
+  K-5's `Rendezvous`. A hint means "channel X changed, maybe look sooner,"
+  nothing more -- advisory, deduplicated, and `ucomm.daemon` never consults
+  one, so a real backend can land later with zero changes to D-1..D-3. Which
+  backend (Bee PSS, native GSOC pub/sub, Waku, an off-Swarm relay) is
+  **deliberately not chosen yet** -- see DESIGN.md §5 and invariant 7.
+  Bridges (D-5/D-6) are the rest of what's left of M2.
 - `docs/RECOMMENDATION.md` is v2: the prior decentralized-recsys
   conversation is merged (R-1 done). Key commitments: sequencing embeddings →
   import → open ingestion → native CF; bridges double as taste-signal

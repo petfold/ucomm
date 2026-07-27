@@ -76,9 +76,11 @@ channel directory; PSS hint path via a full node; IMAP and Nostr bridges —
 the **attention firewall** as standalone value.
 
 - Channel directory + graded dashboard **done** (D-1, D-2): `ucomm.daemon`.
-  No network yet -- `build_dashboard` takes channel events as a plain
-  mapping; wiring that to real polling/PSS hints (D-4) is the daemon's
-  actual "runs continuously" half, still open.
+  Read-state aggregation **done** (D-3). Hint-delivery interface **done**
+  (D-4's abstraction; no real backend chosen yet, deliberately -- see D-4).
+  Still no network -- everything runs on plain in-memory data the caller
+  supplies; wiring a real backend behind D-4 and the first bridges (D-5,
+  D-6) are what's left of M2.
 
 **M3 — rendezvous + spam economics.**
 GSOC mailboxes for unsolicited contact (or PSS shim if GSOC pub/sub not yet
@@ -153,12 +155,18 @@ Daemon/inbox (D):
   learns about new events without polling everything" half --
   `build_dashboard` takes channel events as a plain mapping today, supplied
   however the caller likes, so nothing about D-1..D-3 assumes any of the
-  below). Candidates, weighed in DESIGN.md §5: Bee-native PSS; native GSOC
-  pub/sub (N-2) once it lands; Waku (solves it, but doubles the stack);
-  a lightweight off-Swarm relay (e.g. ntfy) as an interim option. **Whichever
-  is picked, CLAUDE.md invariant 7 applies**: swappable, never required for
-  baseline (poll-only stays fully functional forever), and labeled interim
-  with a stated revisit condition if it isn't the native path.
+  below). The **interface is done**: `ucomm.hints.HintSink`/`HintSource`
+  (a hint is just "channel X changed, maybe look sooner," advisory,
+  deduplicated) plus `InMemoryHints` for tests -- same shape as K-5's
+  `Rendezvous`. **Still open, deliberately**: which real backend fills it.
+  Candidates, weighed in DESIGN.md §5: Bee-native PSS; native GSOC pub/sub
+  (N-2) once it lands; Waku (solves it, but doubles the stack); a
+  lightweight off-Swarm relay (e.g. ntfy) as an interim option. Whichever
+  is picked, CLAUDE.md invariant 7 applies: swappable, never required for
+  baseline (poll-only stays fully functional forever -- `InMemoryHints`
+  with nothing ever published to it is already a legitimate use, not a
+  degraded one), and labeled interim with a stated revisit condition if
+  it isn't the native path.
 - D-5 IMAP bridge
 - D-6 Nostr bridge
 
