@@ -20,7 +20,11 @@ attention layer, universal inbox, discovery. Read `docs/DESIGN.md` first;
    blobs. Do not smuggle payload data into control events.
 4. **Pure policy engine.** (envelope, policy state, clock) → intensity is a
    pure, deterministic, testable function. All mutable state lives in the
-   policy store.
+   policy store. Generalizes beyond attention: any locally-learned/derived
+   view (recommendation priors, concept annotations, sketches —
+   RECOMMENDATION.md §3 "truth vs. projection") must be a disposable,
+   regenerable projection over authoritative signals, never itself synced
+   or treated as source.
 5. **Advisory profiles, tested.** Apps/profiles claim named parameter bundles
    with conformance tests (anti-XMPP rule). Don't add free-form parameter
    combinations.

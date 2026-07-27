@@ -54,6 +54,27 @@ privacy-preserving CF.**
   for content-based filtering can itself be learned rather than hand-curated.
   MDL scoring doubles as annotation-spam defense: annotations that don't
   compress usage don't survive.
+- **Truth vs. projection discipline.** The concept DAG above should follow
+  the same rule the attention engine already enforces for a different kind
+  of derived state (CLAUDE.md invariant 4, "pure policy engine"): raw
+  signals — interaction envelopes, imported taste history, receipts — are
+  the one authoritative, append-only source; anything an algorithm *learns*
+  from them (mdl-fca's concept DAG, embedding indices, engagement sketches,
+  §6) is a namespaced, disposable projection, never itself synced or
+  treated as source. Concretely: keep learned/derived categories under
+  their own namespace, distinct from any human-curated annotation living in
+  the same DAG; rebuild by full regeneration from source rather than
+  incremental reconciliation (a stale projection is a benign failure mode; a
+  drifted one from ad-hoc patching is not); and publish/sync the small
+  source signals rather than the larger, faster-churning derived structure
+  — each device regenerates its own projection locally instead of everyone
+  syncing everyone's recomputation of the same thing. `ucomm.attention`'s
+  `Decision` already is this pattern (a pure, disposable recomputation from
+  `PolicyState`, never itself stored as truth) — this generalizes it to the
+  recommendation layer, not a new idea for this layer alone. It does *not*
+  apply to the channel directory (DESIGN.md §10): that's curated,
+  authoritative user data, the recommendation-layer analogue of a KeePass
+  vault, not something to regenerate from anything else.
 - Embedding indices and concept annotations are content-addressed, shareable
   artifacts on Swarm — computed once, used by many (incentive question in §9).
 
