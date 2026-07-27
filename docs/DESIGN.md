@@ -258,3 +258,20 @@ Swarm's middleware-not-destination positioning.
   rates, mailbox spam economics, light-client needs) sharpens the protocol work.
 - **Attention-claim gaming**: addressed head-on in ATTENTION.md; free-to-claim
   priority would be pinned at max by LLM spam within days.
+
+## 12. Open questions
+
+- **Is daemon dashboard state (§10) authoritative or a projection?** The
+  truth-vs-projection discipline (RECOMMENDATION.md §3, generalizing
+  CLAUDE.md invariant 4 beyond `ucomm.attention.decide`) says any
+  locally-derived view should be a disposable, regenerable projection over
+  authoritative signals, never itself synced or treated as source. The
+  dashboard's active/obsolete split is exactly this kind of derived view —
+  computable at any time from the channel logs plus `PolicyState` and the
+  clock, with no information the source doesn't already have. If that
+  holds, the dashboard should never be persisted/synced as its own state:
+  a device rebuilds it locally, the same way `Decision` is never stored.
+  Worth confirming once M2 actually scopes the daemon (not decided here,
+  since M2 hasn't started) — but noting it now while the parallel to
+  `Decision` is fresh, so M2's design doesn't quietly reinvent authoritative
+  dashboard state and violate a principle already settled elsewhere.
