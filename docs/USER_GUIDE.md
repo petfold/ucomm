@@ -79,11 +79,12 @@ arc so "done" reads in context rather than as the entire ambition:
 - **M2 — notification daemon & universal inbox.** **In progress.** A
   private channel directory, a graded active/obsolete dashboard (computed
   fresh on demand, never stored), read-state aggregated across every
-  channel, and a push/hint-delivery interface are done. Still open: an
-  actual hint-delivery backend (deliberately not chosen yet — see
-  DESIGN.md §5 and CLAUDE.md invariant 7) and the first two bridges (IMAP,
-  Nostr) that turn this into a real "attention firewall" unifying inboxes
-  that exist today.
+  channel, a push/hint-delivery interface, and the IMAP bridge's
+  conversion layer (email → envelopes, no live mailbox yet) are done.
+  Still open: an actual hint-delivery backend (deliberately not chosen
+  yet — see DESIGN.md §5 and CLAUDE.md invariant 7), IMAP's live fetch
+  loop, and the Nostr bridge — the pieces that turn this into a real
+  "attention firewall" unifying inboxes that exist today.
 - **M3 — rendezvous & spam economics.** **Planned, not started.** GSOC
   mailboxes for unsolicited first contact (pending Swarm's own GSOC
   pub/sub work), postage-floor spam defense, attention bonds on Gnosis
@@ -99,11 +100,11 @@ arc so "done" reads in context rather than as the entire ambition:
   once there's a user base whose signals are worth aggregating.
 
 The rest of this guide is the hands-on part: sections 1–10 cover the
-kernel, signing, and the chat profile (M0/M1); sections 11–12 cover the
-daemon core built so far (M2); section 13 is contact exchange; sections
-14–15 cover persistence, the second of which is the one part that touches
-a real network; sections 16–17 cover the dev workflow and where to read
-next.
+kernel, signing, and the chat profile (M0/M1); sections 11–13 cover the
+daemon core and the IMAP bridge built so far (M2); section 14 is contact
+exchange; sections 15–16 cover persistence, the second of which is the one
+part that touches a real network; sections 17–18 cover the dev workflow
+and where to read next.
 
 ## 1. Prerequisites
 
@@ -112,9 +113,9 @@ next.
 - Internet access to PyPI, to install two small published dependencies
   (`recordstore`, `swarm-bee`) — both are real packages this project depends
   on, not local-only tools.
-- Nothing else is required for anything in sections 2–14 below: no Swarm
+- Nothing else is required for anything in sections 2–15 below: no Swarm
   node, no funds, no network calls except the one-time `pip install`.
-  Section 15 (real Swarm feed I/O) is the one part that needs a live Bee
+  Section 16 (real Swarm feed I/O) is the one part that needs a live Bee
   node and, to *write*, a funded postage batch — that section explains
   exactly what that means before you touch it.
 
@@ -147,7 +148,7 @@ Expected: all tests pass except one skip —
 ```
 
 The skip is `tests/test_bee_live.py`, which only runs against a real Bee
-node (section 15). Everything else is fully offline.
+node (section 16). Everything else is fully offline.
 
 Two more checks worth knowing about, both clean on a fresh checkout:
 
@@ -326,7 +327,7 @@ delivered twice.
 
 This is the flagship demo: a real two-party chat, with real signing, real
 verification on every read, and synced read-state receipts — no network
-involved yet (that's section 15).
+involved yet (that's section 16).
 
 ```python
 from ucomm.profiles.chat import ChatChannel, chat_genesis
@@ -368,8 +369,8 @@ A few things worth noticing:
   messages, but `messages()` filters to `MESSAGE` kind only — receipts
   never show up as chat content, only in `read_state()`.
 - Everything here lives in an in-process `AuthorLog` per member. Section
-  14 shows the same shape of object (`RecordStoreAuthorLog`) persisted,
-  and section 15 shows it backed by a real Swarm feed.
+  15 shows the same shape of object (`RecordStoreAuthorLog`) persisted,
+  and section 16 shows it backed by a real Swarm feed.
 
 ## 10. The attention / policy engine
 
@@ -527,7 +528,122 @@ correctness depends on. Polling directly, with `InMemoryHints` publishing
 nothing to poll, is already a complete, legitimate way to run all of this —
 not a degraded fallback while waiting for a "real" backend.
 
-## 13. Out-of-band contact exchange
+## 13. Bridging in existing inboxes: the IMAP conversion layer (M2)
+
+The "attention firewall" pitch (DESIGN.md §10) only works if inboxes you
+already have — not just native ucomm channels — feed into the same
+dashboard. **Bridges** are the adapters that do that: convert some other
+protocol's events into ordinary envelopes, once, so every existing example
+above applies to them unchanged.
+
+**What exists today is the conversion layer only** — turning an email you
+already have into envelopes. There is no live mailbox connection yet (no
+`IMAPClient`, no real IMAP server); that's separate, still-open work. Start
+with the profile, same as chat:
+
+```python
+from ucomm.profiles.mail import mail_genesis, validate_mail_genesis
+
+mail_gen = mail_genesis(nonce="peter-inbox-2026-07-27")
+validate_mail_genesis(mail_gen)
+mail_channel = mail_gen.channel_id()
+print(mail_channel)
+# 62fc4a8d6c18257cb8a31c279311be91aaada8712181708e8c2ff06fa7c40d30
+```
+
+Mail's genesis differs from chat's in exactly the way real email does:
+open membership, `write_policy=anyone` — no standing accept needed before
+someone can reach you, unlike chat's channel-level invitation.
+
+Now convert an actual email (any `email.message.Message` — from a real
+mailbox eventually, a synthetic one here) into envelopes:
+
+```python
+from email.message import EmailMessage
+from ucomm.bridges.imap import bridge_author, envelope_from_email, invitation_for_email
+from ucomm.signing import verify_envelope
+
+msg = EmailMessage()
+msg["From"] = "newsletter@example.com"
+msg["To"] = "peter@example.com"
+msg["Subject"] = "Your weekly digest"
+msg["Date"] = "Mon, 27 Jul 2026 09:00:00 +0000"
+msg.set_content("Here's what happened this week...")
+
+message_env = envelope_from_email(msg, mail_channel, seq=1)
+print(message_env.author)
+# bridge:imap:b9874e99145d07e2c5ea804f702704c7a775b5e6be72c32cec4e413aa79ed11c
+print(message_env.media.mime, "--", message_env.inline.decode().strip())
+# text/plain -- Here's what happened this week...
+print(verify_envelope(message_env))
+# False
+```
+
+Two things worth noticing immediately: `bridge_author` is a deterministic
+hash of the sender address, prefixed `bridge:imap:` so it can never be
+mistaken for a real signing key's address — and `verify_envelope` is
+honestly `False`. Bridged envelopes are unsigned on purpose: ucomm can't
+vouch for what SMTP/DKIM did or didn't verify about the original sender,
+so it doesn't pretend to.
+
+The email also gets a paired invitation — the actual attention request,
+`refs`-only pointer to the message, never duplicating its content:
+
+```python
+received = 1785142800.0   # the email's own Date header, as unix time
+invitation = invitation_for_email(
+    msg, mail_channel, seq=2, message_hash=message_env.event_hash(), now=received,
+)
+print(invitation.refs)
+# ('7f2a3ac6e5e7c9f69e872076f949a15c3ae29e9797541583857c6fcc234a1830',)
+print(invitation.attention)
+# AttentionClaim(importance=5, urgency=5, relevance=TimeWindow(start=1785142800.0, end=1785747600.0), interactivity=0, expected_duration_s=None, collateral=None)
+```
+
+`importance=5, urgency=5` is a naive, fixed bridge default — deliberately
+so. It's exactly as advisory as any sender's claim ever is (invariant 1):
+the receiver's own policy decides how loud this actually is, not the
+quality of the bridge's guess.
+
+That's the whole point of building on the same kernel — this invitation
+is *just an envelope*, so it drops straight into the dashboard from
+section 11 with no bridge-specific code on that side at all:
+
+```python
+from ucomm.daemon import ChannelDirectory, DirectoryEntry, build_dashboard
+from ucomm.attention import PolicyState, SenderContext
+
+directory = ChannelDirectory()
+directory.add(DirectoryEntry(channel=mail_channel, profile="mail"))
+channel_events = {mail_channel: [message_env, invitation]}
+sender_ctx = {bridge_author("newsletter@example.com"): SenderContext(known_contact=False)}
+
+now = received + 3600   # an hour later
+dashboard = build_dashboard(directory, channel_events, PolicyState(threshold=20), sender_ctx, now)
+for item in dashboard.active:
+    print(item.decision.intensity.name, item.decision.effective_priority)
+# FILED 0
+```
+
+An unknown sender's modest claim, capped to the stranger ceiling, quietly
+filed rather than interrupting — receiver sovereignty working exactly as
+intended on bridged content, the same as native content.
+
+**Will this work with a provider like ProtonMail?** Not yet, and not
+directly even once the live fetch loop exists — this section only ever
+touches an already-fetched `email.message.Message`, nothing connects to a
+real mailbox at all right now. When the live IMAP piece is built, Proton
+specifically will need **Proton Mail Bridge**: Proton's mail is stored
+with zero-access encryption, so there's no plain IMAP endpoint to point a
+generic client at directly. Bridge is a small app you run locally that
+logs into your Proton account, decrypts mail on your machine, and exposes
+a normal local IMAP server (`127.0.0.1`, its own generated credentials —
+not your Proton password) that any standard IMAP client, including
+ucomm's bridge once it exists, can connect to like an ordinary mailbox.
+Worth checking Proton's current plan requirements for Bridge access, since
+that's exactly the kind of detail that changes over time.
+
+## 14. Out-of-band contact exchange
 
 Before any channel exists, `ContactCard` lets you hand someone an address
 they can verify actually corresponds to a key someone controls — useful
@@ -555,11 +671,11 @@ can never be replayed as an envelope signature or vice versa. It proves
 control of the address, not who the person is — matching a name to it is a
 local petname decision, never something the card itself asserts.
 
-## 14. Persistence: recordstore-backed logs (still offline)
+## 15. Persistence: recordstore-backed logs (still offline)
 
 `RecordStoreAuthorLog` gives the same log interface as `AuthorLog`, but
 backed by `recordstore` — meaning it can survive a process restart, and
-(section 15) can be pointed at a real Swarm feed with no code changes.
+(section 16) can be pointed at a real Swarm feed with no code changes.
 This example uses `recordstore`'s in-memory backend, so it's still fully
 offline:
 
@@ -579,7 +695,7 @@ print(list(reopened_log) == [signed])
 # True
 ```
 
-## 15. Optional: real Swarm feed I/O
+## 16. Optional: real Swarm feed I/O
 
 This section needs a Bee node you can reach over HTTP, and, to publish
 anything, a **funded, usable, immutable postage batch** on it. Read this
@@ -629,7 +745,7 @@ dependency, so not assumed here.)
 
 With a usable batch id in hand, `ucomm.bee` wires a real log straight onto
 a Swarm feed — the exact same `RecordStoreAuthorLog` interface as section
-14, just backed by the network instead of memory:
+15, just backed by the network instead of memory:
 
 ```python
 import os
@@ -683,7 +799,7 @@ which is why the normal `pytest` run in section 3 doesn't touch the
 network at all — the "103 passed, 1 skipped" you saw there becomes "104
 passed, 0 skipped" the moment you run the full suite with both variables set.
 
-## 16. Development workflow
+## 17. Development workflow
 
 ```bash
 pytest -q               # full offline suite
@@ -694,7 +810,7 @@ ruff check src tests     # linting; `--fix` for the auto-fixable ones
 All three are clean on `main`. If you're adding something, keep them that
 way — CI-equivalent hygiene, even though there's no CI configured yet.
 
-## 17. Where to go next
+## 18. Where to go next
 
 - `docs/DESIGN.md` — the full architecture: two planes, the channel kernel,
   profiles, transports, identity, encryption.
@@ -703,8 +819,9 @@ way — CI-equivalent hygiene, even though there's no CI configured yet.
 - `docs/ROADMAP.md` — module map, milestones, and the open issue list. M0
   and M1 are done; M2 (notification daemon, universal inbox, first
   bridges) is in progress: directory, dashboard, read-state aggregation,
-  and the hint-delivery interface are done (sections 11–12 above); a real
-  hint backend and the first bridges (IMAP, Nostr) are what's left.
+  the hint-delivery interface, and the IMAP bridge's conversion layer are
+  done (sections 11–13 above); a real hint backend, IMAP's live fetch
+  loop, and the Nostr bridge are what's left.
 - `CLAUDE.md` — the invariants this codebase won't violate without a
   design discussion first, and the current-state summary kept in sync with
   every change.

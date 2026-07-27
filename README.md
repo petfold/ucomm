@@ -56,12 +56,16 @@ a live Bee node. New here? Start with `docs/USER_GUIDE.md`.
 **M2 (notification daemon + universal inbox) is in progress**: a private
 channel directory, a graded active/obsolete dashboard (a projection,
 recomputed on demand — never persisted), read-state aggregation across
-every channel, and a push/hint-delivery interface are done. Left: an
-actual hint backend and the first bridges (IMAP, Nostr) — see
-`docs/USER_GUIDE.md` sections 11–12 for the directory/dashboard/hints demo.
-GSOC-based rendezvous (unsolicited contact, group discovery) stays behind
-the `Rendezvous` interface, pending the GSOC/pub-sub work by Viktor Tóth
-and Viktor Trón.
+every channel, a push/hint-delivery interface, and the IMAP bridge's
+conversion layer (email → the same envelopes and dashboard, no live
+mailbox yet) are done. Left: an actual hint backend, IMAP's live fetch
+loop, and the Nostr bridge — see `docs/USER_GUIDE.md` sections 11–13 for
+the directory/dashboard/hints/bridge demos. GSOC-based rendezvous
+(unsolicited contact, group discovery) stays behind the `Rendezvous`
+interface, pending the GSOC/pub-sub work by Viktor Tóth and Viktor Trón.
+Broadcast-style 1:N live streaming is explicitly out of scope here —
+Solar Punk Ltd's own `swarm-hls-stream`/`Swarmcast` line already owns that
+(DESIGN.md §5).
 
 **On decentralization, read this before evaluating further:** everything
 above runs on Swarm feeds and needs no full node — a light client is
