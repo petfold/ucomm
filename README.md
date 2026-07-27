@@ -35,7 +35,7 @@ docs/DESIGN.md          Architecture: two planes, channel kernel, profiles, tran
 docs/ATTENTION.md       Attention economy: priority algebra, policy engine, mechanisms
 docs/RECOMMENDATION.md  Discovery & collaborative filtering (needs merge from prior notes)
 docs/ROADMAP.md         Module decomposition, milestones, initial issues
-docs/USER_GUIDE.md      Tutorial: install, setup, worked examples
+docs/USER_GUIDE.md      Tutorial: motivation, project overview, install, worked examples
 CLAUDE.md               Instructions and invariants for Claude Code sessions
 src/ucomm/              Python package (schema, policy engine, signing, chat profile)
 tests/                  pytest suite

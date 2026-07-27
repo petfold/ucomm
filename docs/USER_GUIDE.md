@@ -1,16 +1,109 @@
 # ucomm user guide
 
-A hands-on tour of `ucomm` as it stands today (milestones M0, M1, and part
-of M2 — see `docs/ROADMAP.md`): the channel kernel, real signing, a working
-chat profile, the attention/policy engine, a channel directory with a
-graded dashboard, out-of-band contact exchange, and persistence either in
-memory or on a real Swarm feed. Every code block below has actually been
-run against the current code; the outputs shown are real, just trimmed
-where a hash would otherwise take up a full line.
+## Introduction
 
-If you want the architecture and the reasoning behind it, read
-`docs/DESIGN.md` and `docs/ATTENTION.md`. This guide is the "just show me
-it working" companion.
+Welcome. This is a tutorial, not just a reference — it starts with *why*
+`ucomm` exists and what it's trying to become, then walks through what's
+actually built today, one runnable example at a time. Every code block from
+"Prerequisites" onward has actually been executed against the current
+code; the outputs shown are real, just trimmed where a hash would otherwise
+take up a full line.
+
+By the end you'll have: installed the project, built a channel and signed
+your own envelopes, run a real two-party chat with receipts, seen the
+attention/policy engine grade an invitation, aggregated several channels
+into one dashboard, and (optionally) written to and read from a real Swarm
+feed. If you want the full architectural reasoning rather than the guided
+tour, read `docs/DESIGN.md` and `docs/ATTENTION.md` directly — this guide
+stays deliberately narrower than those.
+
+## Motivation
+
+Every communication app — chat, email, calls, live streams, forums, social
+feeds — does the same thing: it moves some kind of media from one or more
+people to one or more people, subject to some policy on who gets to
+interrupt whom. The differences between them (are you online right now or
+reading this later? is it just you two or a whole group? is it stored
+forever or does it vanish? can anyone join or only people you invite?)
+reduce to a handful of parameters, not to different principles. And yet
+almost every app on the market rebuilds the same primitives from scratch —
+its own message log, its own invite system, its own notification settings —
+and ships them as a silo that doesn't talk to anything else.
+
+Two pieces of prior art shaped how `ucomm` responds to that:
+
+- **Nostr** shows the minimal-kernel bet actually works: one tiny
+  signed-event schema plus a few "kinds" produced chat, social feeds,
+  marketplaces, and publishing, without redesigning the substrate for each.
+  Its real weaknesses — relay centralization, no storage guarantees,
+  free-to-send spam — are exactly what Ethereum Swarm's storage incentives
+  and postage economics are built to fix.
+- **XMPP** is the cautionary tale in the other direction: an extensible
+  core whose extensions (XEPs) fragmented until interoperability between
+  clients became nominal at best. `ucomm`'s defense is a kernel small
+  enough to fit on a page, plus a small set of *blessed profiles* — named,
+  tested parameter bundles apps claim instead of inventing free-form
+  combinations (the "anti-XMPP rule").
+
+The other half of the motivation is about attention, not just content.
+Every app today conflates "here is a message" with "you should be
+interrupted right now" — which is exactly why notification fatigue and
+per-app do-not-disturb settings that don't talk to each other are
+universal complaints. `ucomm` splits these into two planes on purpose: a
+**content plane** (the message itself, who sent it, what channel it's on)
+and a **control plane** (a request for your attention, which is always
+just *advisory*). The guiding principle, load-bearing throughout the whole
+design, is **receiver sovereignty**: a sender can claim their message is
+important and urgent, but only *your* local policy — running on your own
+device, over signals only you control — decides whether it actually rings,
+buzzes, badges quietly, or gets filed away unseen. No protocol message can
+force a notification. That one rule is what makes a genuinely *universal*
+inbox possible: one policy engine, consistently applied, instead of N
+apps each deciding for you in incompatible ways.
+
+## Project overview: what's built, what's planned
+
+`ucomm` is being built in milestones (the full breakdown, with issue-level
+detail, lives in `docs/ROADMAP.md`). This guide only demonstrates what's
+**done** — nothing below is aspirational — but it's worth seeing the whole
+arc so "done" reads in context rather than as the entire ambition:
+
+- **M0 — channel kernel & attention algebra.** **Done.** The envelope/
+  genesis schema, canonical byte encoding, deterministic causal-DAG merge,
+  and the priority/policy engine (Attila Lendvai's importance × urgency ×
+  ceilings × thresholds model) — all pure, in-memory, fully tested offline.
+- **M1 — known-contact channels over Swarm.** **Done.** Real secp256k1
+  signing, a working two-party/group chat profile, synced read-state
+  receipts, out-of-band contact exchange, and real Swarm feed I/O —
+  confirmed against a live Bee node, not just designed on paper.
+- **M2 — notification daemon & universal inbox.** **In progress.** A
+  private channel directory, a graded active/obsolete dashboard (computed
+  fresh on demand, never stored), read-state aggregated across every
+  channel, and a push/hint-delivery interface are done. Still open: an
+  actual hint-delivery backend (deliberately not chosen yet — see
+  DESIGN.md §5 and CLAUDE.md invariant 7) and the first two bridges (IMAP,
+  Nostr) that turn this into a real "attention firewall" unifying inboxes
+  that exist today.
+- **M3 — rendezvous & spam economics.** **Planned, not started.** GSOC
+  mailboxes for unsolicited first contact (pending Swarm's own GSOC
+  pub/sub work), postage-floor spam defense, attention bonds on Gnosis
+  Chain, local reputation, RLN evaluation.
+- **M4 — interactive media & recommendation (stage 1–2).** **Planned, not
+  started.** A WebRTC signaling profile for calls (a call is just an
+  invitation with interactivity≈100 and a — possibly infinite — relevance
+  window), local embedding-based content recommendations, a personal
+  taste-history importer.
+- **M5 — recommendation (stage 3–4).** **Planned, not started.** Open-graph
+  ingestion via the bridges built in M2 (every inbox adapter doubles as a
+  taste-signal source), native privacy-preserving collaborative filtering
+  once there's a user base whose signals are worth aggregating.
+
+The rest of this guide is the hands-on part: sections 1–10 cover the
+kernel, signing, and the chat profile (M0/M1); sections 11–12 cover the
+daemon core built so far (M2); section 13 is contact exchange; sections
+14–15 cover persistence, the second of which is the one part that touches
+a real network; sections 16–17 cover the dev workflow and where to read
+next.
 
 ## 1. Prerequisites
 
