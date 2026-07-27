@@ -66,6 +66,9 @@ attention layer, universal inbox, discovery. Read `docs/DESIGN.md` first;
 - `src/ucomm/envelope.py` — M0 schema draft (dataclasses); canonical encoding
   now lives in `src/ucomm/encoding.py` (K-1, done, matches recordstore's
   format). Genesis validation + ChannelId derivation done (K-2).
+  `Genesis.ephemeral_ttl_seconds` (Peter's feedback, 2026-07-27): a
+  Signal-style configurable duration for `EPHEMERAL` persistence, validated
+  against `persistence` in `Genesis.validate()`.
 - `src/ucomm/signing.py` — real signing (M1, done): `sign_envelope` /
   `verify_envelope` / `address_of`, secp256k1 + the Ethereum signed-message
   digest via `bee.swarm.keys` (the `swarm-bee` package, PyPI, pinned `>=1.1,

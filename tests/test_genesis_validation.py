@@ -51,6 +51,26 @@ def test_positive_rate_limit_accepted():
     genesis(rate_limit_per_epoch=10).channel_id()
 
 
+def test_ephemeral_ttl_accepted_with_ephemeral_persistence():
+    genesis(persistence=Persistence.EPHEMERAL, ephemeral_ttl_seconds=86400).channel_id()
+
+
+def test_ephemeral_ttl_none_accepted_with_ephemeral_persistence():
+    genesis(persistence=Persistence.EPHEMERAL, ephemeral_ttl_seconds=None).channel_id()
+
+
+def test_ephemeral_ttl_rejected_with_permanent_persistence():
+    with pytest.raises(GenesisError, match="ephemeral_ttl_seconds"):
+        genesis(persistence=Persistence.PERMANENT, ephemeral_ttl_seconds=86400).channel_id()
+
+
+def test_non_positive_ephemeral_ttl_rejected():
+    with pytest.raises(GenesisError, match="ephemeral_ttl_seconds"):
+        genesis(persistence=Persistence.EPHEMERAL, ephemeral_ttl_seconds=0).channel_id()
+    with pytest.raises(GenesisError, match="ephemeral_ttl_seconds"):
+        genesis(persistence=Persistence.EPHEMERAL, ephemeral_ttl_seconds=-1).channel_id()
+
+
 def test_unknown_profile_rejected():
     with pytest.raises(GenesisError, match="profile"):
         genesis(profile="not-a-real-profile").channel_id()

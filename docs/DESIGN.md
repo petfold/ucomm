@@ -96,6 +96,7 @@ The genesis record (whose hash is the ChannelId) fixes:
 | membership | fixed list \| invite-capability \| open |
 | media set | subsets of {text, audio, video, file}; each independently deliverable |
 | persistence | permanent \| ephemeral (crypto-shredding; see §8) \| archival-optional |
+| ephemeral TTL | optional duration for ephemeral persistence (Signal-style disappearing messages, configured per channel like everything else here — not per message) |
 | privacy | public \| ACT-gated \| E2EE(scheme) |
 | ordering | causal-DAG merge \| per-author independent \| moderator-sequenced |
 | write policy | anyone \| members \| single broadcaster |
@@ -208,7 +209,13 @@ libraries. Identity/WoT is the clearest case:
   **crypto-shredding**: keys destroyed on schedule, ciphertext persists until
   stamps lapse. Forward secrecy holds (past keys deleted), but ephemerality is a
   key-lifecycle property, not a data-deletion guarantee. The spec says this
-  plainly; apps must too.
+  plainly; apps must too. The schedule is `Genesis.ephemeral_ttl_seconds`
+  (§3.3) — a duration, not a yes/no, the same idea as Signal's per-chat
+  disappearing-messages timer. It's still a *schedule for key destruction*,
+  not message deletion: the same "ciphertext persists while stamps are
+  funded" caveat applies regardless of what TTL is set. `None` means
+  "unspecified" (a profile default decides), not "never" — `PERMANENT`
+  persistence is how a channel says "never."
 
 ## 9. Receiver sovereignty (normative principle)
 
@@ -245,6 +252,13 @@ schema and policy engine. A personal attention firewall — unified inbox, one D
 policy with exceptions, across everything — is a product people would run for
 its own sake. Come for the unified DND, stay for the protocol. This also fits
 Swarm's middleware-not-destination positioning.
+
+This M2 set is the open-protocol bridges specifically — the ones where
+"adapter" means writing to a public spec, not reverse-engineering a client.
+Closed-platform daily drivers (the Signal messaging app, Telegram, WhatsApp,
+Messenger) are real demand but a materially different, harder problem per
+platform; see ROADMAP.md's "Explicitly deferred" for the feasibility
+breakdown rather than treating it as one bridge-shaped task.
 
 ## 11. Risks
 

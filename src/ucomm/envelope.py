@@ -44,6 +44,12 @@ class Persistence(str, Enum):
     ARCHIVAL_OPTIONAL = "archival-optional"
 
 
+# EPHEMERAL is a category (crypto-shredding happens on *some* schedule); the
+# schedule itself is Genesis.ephemeral_ttl_seconds, e.g. Signal's per-chat
+# disappearing-messages timer. None means "unspecified" (a profile/app
+# default), not "never" -- PERMANENT is the way to say "never."
+
+
 class Ordering(str, Enum):
     CAUSAL_DAG = "causal-dag"
     PER_AUTHOR = "per-author"
@@ -133,6 +139,7 @@ class Genesis:
     privacy: Privacy
     ordering: Ordering
     write_policy: WritePolicy
+    ephemeral_ttl_seconds: int | None = None  # Signal-style disappearing-messages
     rate_limit_per_epoch: int | None = None
     suggested_priority_offset: int = 0  # advisory (DESIGN.md section 9)
     profile: str | None = None  # blessed profile name, e.g. "chat" (DESIGN 4)
@@ -159,6 +166,13 @@ class Genesis:
             raise GenesisError("media must declare at least one kind")
         if self.rate_limit_per_epoch is not None and self.rate_limit_per_epoch <= 0:
             raise GenesisError("rate_limit_per_epoch must be positive if set")
+        if self.ephemeral_ttl_seconds is not None:
+            if self.persistence is not Persistence.EPHEMERAL:
+                raise GenesisError(
+                    "ephemeral_ttl_seconds only applies to ephemeral persistence"
+                )
+            if self.ephemeral_ttl_seconds <= 0:
+                raise GenesisError("ephemeral_ttl_seconds must be positive if set")
         if self.profile is not None and self.profile not in BLESSED_PROFILES:
             raise GenesisError(f"unknown profile: {self.profile!r}")
 

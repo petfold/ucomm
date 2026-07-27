@@ -165,3 +165,27 @@ Naming/meta (N):
   overlaps the knowledge-base verification mechanism work; revisit at M4+)
 - Marketplace/offer integration (channels as negotiation substrate for the
   universal offer schema — natural later convergence, out of scope now)
+- **Closed-platform bridges: Signal, Telegram, WhatsApp, Messenger/Facebook
+  feeds.** Real demand (these are daily-driver apps for a lot of people,
+  including Peter), but feasibility varies sharply and none are as
+  tractable as the open-protocol bridges already planned for M2 (Matrix,
+  Nostr — open federated protocols; IMAP, RSS — open standards). In rough
+  order of tractability:
+  - **Telegram** — most tractable of the four: a public Bot API plus a
+    documented MTProto client API, with established OSS bridges to learn
+    from (e.g. `mautrix-telegram`). Most chats aren't E2E encrypted by
+    default, which is what makes bridging technically straightforward
+    (also means it's the wrong profile fit for `privacy=E2EE` channels).
+  - **WhatsApp / Messenger** (both Meta) — official APIs exist but are
+    business/bot-oriented, not personal-account bridging; unofficial routes
+    (e.g. `whatsmeow`-based bridges) work today but are reverse-engineered,
+    fragile across client updates, and ban-prone.
+  - **Signal** — least tractable of the four, despite being the one
+    requested first. No public bridging API at all, and Signal's
+    maintainers have historically opposed third-party interoperability on
+    privacy/security grounds (e.g. shutting down LibreSignal) — this isn't
+    a gap that's likely to close, it's closer to a design position of
+    Signal's.
+  Revisit per-platform if/when picked up, not as one block — a "Signal
+  bridge" and a "Telegram bridge" are different-sized problems wearing the
+  same name.
