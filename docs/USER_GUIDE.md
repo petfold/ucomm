@@ -666,9 +666,22 @@ UCOMM_BEE_POSTAGE_BATCH_ID=<your batch id> \
 pytest tests/test_bee_live.py -v
 ```
 
+```
+tests/test_bee_live.py::test_author_log_round_trips_through_a_real_feed PASSED
+
+============================== 1 passed in 10.35s ==============================
+```
+
+That's a real run against a live Bee 2.8.1 node, not a hypothetical — the
+same test has now passed on more than one occasion, including reusing a
+previously-bought batch well within its TTL (buying a fresh one every run
+isn't necessary — check `usable`/`batchTTL` on your existing batch first,
+per the stamp-checking guidance earlier in this section).
+
 It's skipped automatically if those environment variables aren't set,
 which is why the normal `pytest` run in section 3 doesn't touch the
-network at all.
+network at all — the "103 passed, 1 skipped" you saw there becomes "104
+passed, 0 skipped" the moment you run the full suite with both variables set.
 
 ## 16. Development workflow
 
