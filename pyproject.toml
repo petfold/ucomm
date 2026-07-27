@@ -10,7 +10,7 @@ requires-python = ">=3.11"
 readme = "README.md"
 license = { text = "GPL-3.0-or-later" }
 authors = [{ name = "Peter Foldiak" }]
-dependencies = ["recordstore[bee]>=0.11,<0.12", "swarm-bee>=1.1,<2"]
+dependencies = ["recordstore[bee]>=0.11,<0.12", "swarm-bee>=1.1,<2", "imapclient>=3.1,<4"]
 
 [project.optional-dependencies]
 dev = ["pytest>=8", "hypothesis>=6", "mypy>=1.10", "ruff>=0.5"]
@@ -26,6 +26,10 @@ strict = true
 
 [[tool.mypy.overrides]]
 module = "recordstore.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "imapclient.*"
 ignore_missing_imports = true
 
 [tool.ruff]

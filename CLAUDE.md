@@ -150,15 +150,23 @@ attention layer, universal inbox, discovery. Read `docs/DESIGN.md` first;
   backend (Bee PSS, native GSOC pub/sub, Waku, an off-Swarm relay) is
   **deliberately not chosen yet** -- see DESIGN.md §5 and invariant 7.
 - `src/ucomm/profiles/mail.py` + `src/ucomm/bridges/imap.py` — IMAP
-  bridge's conversion layer (D-5, done): `mail_genesis`/
-  `validate_mail_genesis` (DESIGN.md §4's mail row) and
-  `envelope_from_email`/`invitation_for_email`, pure and offline-tested
-  against synthetic `email` messages. Bridged envelopes are deliberately
-  unsigned (`sig=""`) -- a bridge can't vouch for a foreign protocol's
-  authenticity, so `verify_envelope` on one is honestly always `False`.
-  Live IMAP fetch (a real mailbox via `IMAPClient`) is still open, same
-  split as K-4/`ucomm.bee`: logic ships and gets tested before the network
-  adapter. Nostr (D-6) is the rest of what's left of M2.
+  bridge (D-5, done, both layers): `mail_genesis`/`validate_mail_genesis`
+  (DESIGN.md §4's mail row) and `envelope_from_email`/
+  `invitation_for_email` (pure, offline-tested against synthetic `email`
+  messages) plus `ImapMailbox` (live fetch via `IMAPClient`, now a real
+  dependency, PyPI pinned `>=3.1,<4`): UID-tracked incremental fetch,
+  handles the RFC 3501 §9 quirk where a `n:*` UID range always includes
+  the mailbox's highest UID even with nothing new, per-bridged-author
+  `seq` numbering, read-only (`select_folder(..., readonly=True)`) --
+  ingests mail, never sends; SMTP is a distinct, out-of-scope capability.
+  Bridged envelopes are deliberately unsigned (`sig=""`) -- a bridge can't
+  vouch for a foreign protocol's authenticity, so `verify_envelope` on one
+  is honestly always `False`. `ImapMailbox` is unit-tested against a fake
+  `IMAPClient` double (`tests/test_imap_mailbox.py`); the opt-in real-
+  mailbox counterpart (`tests/test_imap_bridge_live.py`, env-var gated,
+  same shape as `test_bee_live.py`) has **not been run against a real
+  server yet** -- no test mailbox was available when this was built.
+  Nostr (D-6) is the rest of what's left of M2.
 - `docs/RECOMMENDATION.md` is v2: the prior decentralized-recsys
   conversation is merged (R-1 done). Key commitments: sequencing embeddings →
   import → open ingestion → native CF; bridges double as taste-signal

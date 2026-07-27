@@ -78,10 +78,11 @@ the **attention firewall** as standalone value.
 - Channel directory + graded dashboard **done** (D-1, D-2): `ucomm.daemon`.
   Read-state aggregation **done** (D-3). Hint-delivery interface **done**
   (D-4's abstraction; no real backend chosen yet, deliberately -- see D-4).
-  IMAP bridge's conversion layer **done** (D-5; live fetch loop still
-  open). Still no network for D-1..D-4 -- everything there runs on plain
-  in-memory data the caller supplies; wiring a real D-4 backend, IMAP's
-  live fetch loop, and the Nostr bridge (D-6) are what's left of M2.
+  IMAP bridge **done** (D-5, both layers: conversion + live fetch loop),
+  though the live loop is only verified against a fake client so far, not
+  a real mailbox. Wiring a real D-4 backend, running D-5's live loop
+  against a real mailbox at least once, and the Nostr bridge (D-6) are
+  what's left of M2.
 
 **M3 — rendezvous + spam economics.**
 GSOC mailboxes for unsolicited contact (or PSS shim if GSOC pub/sub not yet
@@ -188,11 +189,19 @@ Daemon/inbox (D):
   synthetic `email` messages, no network). Bridged envelopes are
   deliberately unsigned (`sig=""`) -- a bridge can't vouch for a foreign
   protocol's authenticity, and pretending otherwise would be worse than
-  being honest that `verify_envelope` on one is always `False`. **Still
-  open**: the live fetch loop (a real mailbox via `IMAPClient`, per
-  CLAUDE.md's library convention) -- same split as K-4/`ucomm.bee` before
-  it: kernel-adjacent logic ships and gets tested before the network
-  adapter, not together.
+  being honest that `verify_envelope` on one is always `False`.
+  **Live fetch loop done** (`ImapMailbox`, via `IMAPClient` per CLAUDE.md's
+  library convention): UID-tracked incremental fetch (handles the RFC 3501
+  §9 quirk where a `n:*` search range always includes the mailbox's
+  highest UID even when nothing new exists), per-bridged-author `seq`
+  numbering, read-only (`select_folder(..., readonly=True)`). Unit-tested
+  against a fake `IMAPClient` double; `tests/test_imap_bridge_live.py` is
+  the opt-in real-mailbox counterpart (env-var gated, skipped by default,
+  same shape as `test_bee_live.py`) -- **not yet run against a real
+  server**, no test mailbox available when this was built. **Explicitly
+  read-only, no SMTP**: this bridge ingests mail into the dashboard, it
+  does not send or reply -- that would be a distinct, separate capability,
+  not assumed to be in scope here.
 - D-6 Nostr bridge
 
 Recommendation (R) — sequencing per RECOMMENDATION.md §2: embeddings →
