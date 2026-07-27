@@ -158,7 +158,46 @@ not packet delivery.
 | **Feeds / single-owner chunks** | author logs, channel directories, profile state | immutable stamps required for feeds; content persists while stamps are funded |
 | **GSOC** (Graffiti Single-Owner Chunks) | many-writers-to-one-address rendezvous: open mailboxes, group discovery, notification fan-in | subscriber must be a **full node** in the target neighborhood (mined identifier); use **mutable** stamps; pub/sub layer still in progress (V. Tóth, V. Trón) |
 | **PSS** | point-to-point push (notification hints, signaling) | receiving node must be **full** to subscribe; targets capped at 4 hex chars in bee-js |
-| **WebRTC** | interactive audio/video (interactivity ≳ 50) | signaling (SDP/ICE) carried as channel control events over Swarm; optional archival written back to the same channel log |
+| **WebRTC** | the **call** profile only: 1:few, truly interactive audio/video (interactivity ≳ 50) | signaling (SDP/ICE) carried as channel control events over Swarm; optional archival written back to the same channel log |
+| **HLS segments over feeds** | the **broadcast** profile: 1:N live/VOD | not built or owned by ucomm — Solar Punk Ltd's own streaming line (`swarm-hls-stream`, superseded by the in-design `Swarmcast`) already does this: segments uploaded to Swarm, a feed-based manifest for playback. ucomm's role is control-plane only (invitation/presence/"who's live", the attention decision on whether that interrupts you) |
+
+**Performance implication of the WebRTC split (M4, not built yet):** ucomm
+only touches a call/stream at setup and, if enabled, archival — never the
+live media itself. Signaling is a handful of small envelopes exchanged
+through the normal channel/signing/policy path, so it inherits Swarm's
+actual latency — feed writes/reads aren't instant, and `recordstore`'s
+`SwarmFeedPointer` documents real feed-lookup flakiness it already works
+around — so connection setup will plausibly take longer than a dedicated
+low-latency signaling server would. Once connected, audio/video
+flows entirely over WebRTC's own SRTP data plane, direct or via TURN,
+never touching Swarm or an envelope — no per-frame or per-packet cost,
+by design, because Swarm is addressable persistence, not packet delivery.
+Discrete in-call control events (mute, hold, transfer, renegotiation), if
+modeled as channel envelopes, each pay the normal write-and-verify cost
+when they happen — fine in practice since they're occasional, not
+continuous, but not literally free either. **Requirement for when M4 is
+built:** optional archival must write back to the channel log
+asynchronously/best-effort — nothing on the live media path may block on
+a Swarm write.
+
+**Broadcast is deliberately not ucomm's to build (checked against Solar
+Punk Ltd's actual roadmap, not assumed).** `swarm-hls-stream` is real,
+working HLS-segments-on-Swarm-feeds infrastructure; `Swarmcast` is its
+named successor, still at the design stage, not finalized. ucomm should
+track that design rather than duplicate it, contributing control-plane
+thinking (invitation/presence/attention) if there's appetite for it, not
+an independent transport. The same check surfaced that Solar Punk already
+has a real, production chat feature (threads, likes, reactions) built on
+Swarm feeds with Waku used *only* as a push signal to avoid polling —
+never for message storage. That's real evidence the narrow "feed is
+truth, Waku is a hint" pattern (the same shape as `ucomm.hints`) works in
+production, distinct from the "adopt Waku as the whole transport" option
+weighed and set aside above — still not a chosen backend for D-4
+(invariant 7 still applies), but no longer a purely theoretical one either.
+ucomm's own chat profile is intentionally **complementary** to that
+existing system, not a replacement candidate — a generic, portable
+reference implementation that exists alongside it, by deliberate choice,
+not an oversight.
 
 ### Light clients and the full-node boundary
 

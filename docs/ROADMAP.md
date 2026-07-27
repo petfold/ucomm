@@ -89,11 +89,20 @@ landed); postage-floor enforcement; attention bonds contract on Gnosis Chain
 ratchet; RLN evaluation.
 
 **M4 — interactive media + recommendation stages 1–2.**
-WebRTC signaling profile; call/record duality; recsys stage 1–2 (local
-embedding recommender R-4 + portability importer R-5, both N=1-useful) feeding
-priors into the policy engine. Note: R-6 (channel directory + WebSub ingester)
-is independent of everything else and can be prototyped any time from M1
-onward.
+WebRTC signaling profile (the **call** profile only); call/record duality;
+recsys stage 1–2 (local embedding recommender R-4 + portability importer
+R-5, both N=1-useful) feeding priors into the policy engine. Note: R-6
+(channel directory + WebSub ingester) is independent of everything else
+and can be prototyped any time from M1 onward.
+
+- **Broadcast is explicitly out of scope for M4** (checked against Solar
+  Punk Ltd's actual roadmap, 2026-07-27, not assumed): 1:N live/VOD
+  streaming already has a real, active line of work (`swarm-hls-stream`,
+  superseded by the in-design `Swarmcast`) that ucomm should track and
+  potentially contribute control-plane thinking to, not duplicate. See
+  DESIGN.md §5. ucomm's chat profile stays deliberately complementary to
+  Solar Punk's existing production chat (Waku-signaled, feed-stored), not
+  a replacement candidate.
 
 **M5 — recommendation stages 3–4.**
 Open-graph ingestion via the M2 bridges (ATProto, Nostr, ActivityPub,
@@ -160,8 +169,11 @@ Daemon/inbox (D):
   deduplicated) plus `InMemoryHints` for tests -- same shape as K-5's
   `Rendezvous`. **Still open, deliberately**: which real backend fills it.
   Candidates, weighed in DESIGN.md §5: Bee-native PSS; native GSOC pub/sub
-  (N-2) once it lands; Waku (solves it, but doubles the stack); a
-  lightweight off-Swarm relay (e.g. ntfy) as an interim option. Whichever
+  (N-2) once it lands; Waku (solves it, but doubles the stack -- though
+  Solar Punk Ltd's own chat already validates the *narrow* version of this,
+  Waku as a push signal only, feeds as truth, in production, not just in
+  theory); a lightweight off-Swarm relay (e.g. ntfy) as an interim option.
+  Whichever
   is picked, CLAUDE.md invariant 7 applies: swappable, never required for
   baseline (poll-only stays fully functional forever -- `InMemoryHints`
   with nothing ever published to it is already a legitimate use, not a
