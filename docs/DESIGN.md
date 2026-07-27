@@ -160,12 +160,45 @@ not packet delivery.
 | **PSS** | point-to-point push (notification hints, signaling) | receiving node must be **full** to subscribe; targets capped at 4 hex chars in bee-js |
 | **WebRTC** | interactive audio/video (interactivity ≳ 50) | signaling (SDP/ICE) carried as channel control events over Swarm; optional archival written back to the same channel log |
 
-Light-client reality: phones will not run full nodes, so PSS/GSOC subscription
-is delegated to a user-chosen full node (their own, a household node, or a paid
-service) that forwards hints to devices. This "notification relay" is a trust
-decision surfaced in the identity layer; it sees traffic metadata (which
-encrypted channels are active), not content. Metadata minimization at the relay
-is an open problem (ROADMAP, issue K-9).
+### Light clients and the full-node boundary
+
+**Nothing built so far needs a full node.** Feeds are point lookups —
+"fetch/push the chunk at this address" — which is exactly what a light
+node does via its full-node peers, with no standing position of its own in
+the network. Everything shipped through M2 (channel kernel, signing, the
+chat profile, receipts, the directory, the dashboard) runs entirely on
+feeds. GSOC and PSS are a different kind of operation: "be reachable at
+this address for things that arrive over time" — GSOC because noticing a
+new write at a shared mailbox address relies on ordinary chunk replication
+to that address's neighborhood, PSS because a target names a neighborhood
+(as few as 4 hex chars) that traffic gets routed *to*, not looked up *by*.
+Both require occupying a stable position in the Kademlia topology that
+other nodes route toward or replicate to — the storage/relay obligation
+light nodes are specifically built to opt out of. This isn't a Bee gap to
+patch; it's structural to what "light node" means.
+
+Consequence: PSS/GSOC subscription is delegated to a user-chosen full node
+(their own, a household node, or a paid service) that forwards hints to
+devices. This "notification relay" is a real, and currently unavoidable,
+centralization point for the *push/discovery* layer specifically — not the
+content layer, which stays on feeds and needs no relay at all. The relay
+sees traffic metadata (which encrypted channels are active, roughly how
+often) rather than content, but that is not a small caveat: who talks to
+whom and how often is exactly what traffic analysis targets, often more
+useful to an adversary than content would be. Metadata minimization at the
+relay is an **open, unsolved problem** (ROADMAP, issue K-9) — not something
+already mitigated.
+
+The honest tradeoff this leaves: a user can run ucomm entirely today by
+polling their own feeds directly — fully self-sovereign, no relay, no full
+node — at the cost of latency (new events are found on the next poll, not
+the instant they land). Wanting near-instant push, which is what most
+people expect from a "communicator," currently means trusting a full
+node — yours or someone else's — full stop; there is no third,
+light-and-decentralized option on Swarm today. Delegation is opt-in on top
+of a fully working baseline, not a structural requirement to use any of
+this, but it's the honest ceiling on how decentralized the *fast* path can
+be until Swarm's own light-client story for PSS/GSOC changes.
 
 ## 6. Rendezvous
 
@@ -268,8 +301,11 @@ breakdown rather than treating it as one bridge-shaped task.
 - **Inner-platform effect**: the configurable everything-communicator becomes as
   complex as the sum of the apps. Defenses: one-page kernel, profile discipline
   with conformance tests, middleware owns substrate + attention, apps own UX.
-- **Full-node dependency** for PSS/GSOC subscription pushes casual users toward
-  relays; relay trust and metadata leakage need explicit treatment.
+- **Full-node dependency** for PSS/GSOC subscription pushes casual users
+  toward relays (§5, "Light clients and the full-node boundary"); this is a
+  real centralization point for the push/discovery layer, not yet
+  mitigated (K-9 is a survey, not a fix). Confined to that layer, though —
+  the content layer (feeds) needs no relay and works on light clients today.
 - **GSOC pub/sub immaturity**: mitigated by the Rendezvous interface; also an
   opportunity — a concrete downstream consumer with stated requirements (write
   rates, mailbox spam economics, light-client needs) sharpens the protocol work.

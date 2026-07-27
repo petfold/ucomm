@@ -58,6 +58,15 @@ bridges (IMAP, Nostr). GSOC-based rendezvous (unsolicited contact, group
 discovery) stays behind the `Rendezvous` interface, pending the GSOC/pub-sub
 work by Viktor Tóth and Viktor Trón.
 
+**On decentralization, read this before evaluating further:** everything
+above runs on Swarm feeds and needs no full node — a light client is
+enough. Real-time push notification and unsolicited-contact discovery (PSS
+and GSOC) are a different story: both require a full node, yours or a
+relay's, and that relay sees traffic metadata, which is a real
+centralization point still unresolved (not just a caveat) — see
+`docs/DESIGN.md` §5 and §11. Nothing here should be evaluated as "fully
+decentralized" without that qualification.
+
 ## Related projects
 
 - **recordstore** (github.com/petfold/recordstore) — candidate persistence substrate
