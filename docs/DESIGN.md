@@ -132,6 +132,13 @@ Observations that keep the model honest:
 - A "follow" is a standing acceptance of a channel at a low priority ceiling.
 - A phone call is an invitation with interactivity≈100 and a short relevance
   window; its recording is the *same channel* with persistence enabled.
+  Interactivity and relevance are independent axes, though — unlike a
+  landline call, where "live now" and "ring window" are the same decision.
+  A caller can set interactivity≈100 with relevance→∞ ("must be live, but
+  whenever") — a live-but-patient request no legacy phone system can
+  express. What that looks like on the called phone — immediate ring, a
+  persistent dashboard entry, silence until the receiver is free — is the
+  receiver's local policy alone (§9), never the caller's to set.
 - A reply/quote is an envelope whose `refs` cross channels (subject to the
   target's privacy).
 
