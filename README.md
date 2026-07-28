@@ -1,5 +1,8 @@
 # ucomm — universal communicator middleware for Ethereum Swarm
 
+[![license](https://img.shields.io/badge/license-GPL--3.0--or--later-blue)](LICENSE)
+[![status](https://img.shields.io/badge/status-M2%20in%20progress-yellow)](docs/ROADMAP.md)
+
 *Working title. Naming is an open question (see ROADMAP.md, issue N-1).*
 
 Every communication app — chat, email, calls, streams, forums, social feeds — moves
