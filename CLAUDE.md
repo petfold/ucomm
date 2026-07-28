@@ -64,7 +64,7 @@ attention layer, universal inbox, discovery. Read `docs/DESIGN.md` first;
 
 - Python ≥ 3.11, `src/` layout, full type hints, dataclasses for schema types.
 - Tests: pytest; property-based tests (hypothesis) for merge/algebra
-  determinism. Run: `pip install -e ".[dev]" && pytest`.
+  determinism. Run: `pip install -e ".[test]" && pytest`.
 - No premature networking: M0 is schema + algebra + in-memory implementations
   (see ROADMAP.md milestones). Bee integration starts at M1, via HTTP API
   against a local node; keep it behind thin adapters.

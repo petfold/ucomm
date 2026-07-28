@@ -126,7 +126,7 @@ git clone https://github.com/petfold/ucomm.git
 cd ucomm
 python3 -m venv .venv
 source .venv/bin/activate        # .venv\Scripts\activate on Windows
-pip install -e ".[dev]"
+pip install -e ".[test]"
 ```
 
 This installs `ucomm` itself in editable mode, its runtime dependencies
