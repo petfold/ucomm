@@ -1,5 +1,6 @@
 # ucomm — universal communicator middleware for Ethereum Swarm
 
+[![tests](https://github.com/petfold/ucomm/actions/workflows/tests.yml/badge.svg)](https://github.com/petfold/ucomm/actions/workflows/tests.yml)
 [![license](https://img.shields.io/badge/license-BSD--3--Clause-blue)](LICENSE)
 [![status](https://img.shields.io/badge/status-M2%20in%20progress-yellow)](docs/ROADMAP.md)
 
