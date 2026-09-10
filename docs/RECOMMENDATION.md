@@ -58,7 +58,7 @@ privacy-preserving CF.**
   cross-repo statement now lives at ontodag `docs/plans/PROJECTIONS.md` —
   sources of truth / regenerable namespaced projections / the human layer —
   which also assigns ucomm the plain envelope→facts projector, the
-  transcription analog of datacat's `project-ontodag`, same JSONL wire
+  transcription analog of holdings' `project-ontodag`, same JSONL wire
   format; R-9's learned layer follows the same rule.)* The concept DAG above should follow
   the same rule the attention engine already enforces for a different kind
   of derived state (CLAUDE.md invariant 4, "pure policy engine"): raw
