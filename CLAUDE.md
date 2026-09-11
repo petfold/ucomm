@@ -3,7 +3,7 @@
 Middleware for a universal communicator on Ethereum Swarm: channel kernel,
 attention layer, universal inbox, discovery. Read `docs/DESIGN.md` first;
 `docs/ATTENTION.md` and `docs/RECOMMENDATION.md` for the respective layers;
-`docs/ROADMAP.md` for what to build next.
+`ROADMAP.md` for what to build next.
 
 ## Invariants — do not violate without discussion
 

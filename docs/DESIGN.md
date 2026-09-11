@@ -1,7 +1,7 @@
 # DESIGN — universal communicator middleware
 
 Status: draft for discussion. Companion documents: ATTENTION.md (priority model
-and mechanisms), RECOMMENDATION.md (discovery layer), ROADMAP.md (build plan).
+and mechanisms), RECOMMENDATION.md (discovery layer), ../ROADMAP.md (build plan).
 
 ## 1. Thesis and prior art
 
@@ -373,7 +373,7 @@ This M2 set is the open-protocol bridges specifically — the ones where
 "adapter" means writing to a public spec, not reverse-engineering a client.
 Closed-platform daily drivers (the Signal messaging app, Telegram, WhatsApp,
 Messenger) are real demand but a materially different, harder problem per
-platform; see ROADMAP.md's "Explicitly deferred" for the feasibility
+platform; see ../ROADMAP.md's "Explicitly deferred" for the feasibility
 breakdown rather than treating it as one bridge-shaped task.
 
 ## 11. Risks

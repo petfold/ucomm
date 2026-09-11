@@ -2,7 +2,7 @@
 
 [![tests](https://github.com/petfold/ucomm/actions/workflows/tests.yml/badge.svg)](https://github.com/petfold/ucomm/actions/workflows/tests.yml)
 [![license](https://img.shields.io/badge/license-BSD--3--Clause-blue)](LICENSE)
-[![status](https://img.shields.io/badge/status-M2%20in%20progress-yellow)](docs/ROADMAP.md)
+[![status](https://img.shields.io/badge/status-M2%20in%20progress-yellow)](ROADMAP.md)
 
 *Working title. Naming is an open question (see ROADMAP.md, issue N-1).*
 
@@ -38,7 +38,7 @@ engine is the only authority over the receiver's attention.
 docs/DESIGN.md          Architecture: two planes, channel kernel, profiles, transports
 docs/ATTENTION.md       Attention economy: priority algebra, policy engine, mechanisms
 docs/RECOMMENDATION.md  Discovery & collaborative filtering (needs merge from prior notes)
-docs/ROADMAP.md         Module decomposition, milestones, initial issues
+ROADMAP.md         Module decomposition, milestones, initial issues
 docs/USER_GUIDE.md      Tutorial: motivation, project overview, install, worked examples
 CLAUDE.md               Instructions and invariants for Claude Code sessions
 src/ucomm/              Python package (schema, policy engine, signing, chat profile)
@@ -48,7 +48,7 @@ tests/                  pytest suite
 ## Status
 
 **M0 (schema + algebra) and M1 (known-contact channels over Swarm) are done**
-— see `docs/ROADMAP.md` for the full milestone/issue breakdown. Concretely:
+— see `ROADMAP.md` for the full milestone/issue breakdown. Concretely:
 the envelope/genesis schema with canonical encoding and validation; the
 priority algebra and policy engine with golden decision tests; per-author
 logs with deterministic causal-DAG merge, backed by either an in-memory

@@ -64,7 +64,7 @@ apps each deciding for you in incompatible ways.
 ## Project overview: what's built, what's planned
 
 `ucomm` is being built in milestones (the full breakdown, with issue-level
-detail, lives in `docs/ROADMAP.md`). This guide only demonstrates what's
+detail, lives in `../ROADMAP.md`). This guide only demonstrates what's
 **done** — nothing below is aspirational — but it's worth seeing the whole
 arc so "done" reads in context rather than as the entire ambition:
 
@@ -816,7 +816,7 @@ way — CI-equivalent hygiene, even though there's no CI configured yet.
   profiles, transports, identity, encryption.
 - `docs/ATTENTION.md` — the priority algebra and policy engine in depth,
   plus the incentive mechanisms (bonds, reputation) not yet built.
-- `docs/ROADMAP.md` — module map, milestones, and the open issue list. M0
+- `../ROADMAP.md` — module map, milestones, and the open issue list. M0
   and M1 are done; M2 (notification daemon, universal inbox, first
   bridges) is in progress: directory, dashboard, read-state aggregation,
   the hint-delivery interface, and the IMAP bridge's conversion layer are

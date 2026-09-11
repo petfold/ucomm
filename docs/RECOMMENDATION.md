@@ -3,7 +3,7 @@
 Status: v2 — conclusions from the prior conversation on decentralized
 recommendation systems (2026) are merged; the `[MERGE]` markers from v1 are
 resolved. Companion documents: ATTENTION.md (the negative half of relevance
-estimation), DESIGN.md (kernel, bridges), ROADMAP.md (issues R-*).
+estimation), DESIGN.md (kernel, bridges), ../ROADMAP.md (issues R-*).
 
 ## 1. Role in the communicator
 
