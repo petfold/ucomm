@@ -29,6 +29,15 @@ imports `attention`; `attention` evaluates claims, never constructs them.
 
 ## Milestones
 
+- [x] **M0** — schema + algebra, no network.
+- [x] **M1** — known-contact channels over Swarm; feature-complete.
+- [ ] **M2** — daemon, universal inbox, first bridges. *In progress:* D-1 to
+      D-5 done; what is left is a real D-4 backend, D-5's live loop run
+      against a real mailbox at least once, and the Nostr bridge (D-6).
+- [ ] **M3** — rendezvous + spam economics.
+- [ ] **M4** — interactive media + recommendation stages 1-2.
+- [ ] **M5** — recommendation stages 3-4.
+
 **M0 — schema + algebra (no network).**
 Envelope/genesis dataclasses with canonical encoding and signature stubs;
 priority algebra as pure functions; policy engine over an in-memory store;
@@ -41,16 +50,16 @@ Author logs on feeds (via recordstore where it fits); contact exchange
 (addresses + keys) out-of-band; two-party and small-group chat profile
 end-to-end; read-state receipts synced. No GSOC needed.
 
-- Real signing **done**: `ucomm.signing` (secp256k1 + Ethereum signed-message
+- [x] Real signing **done**: `ucomm.signing` (secp256k1 + Ethereum signed-message
   digest via `bee.swarm.keys`, the same scheme Bee verifies SOC/feed
   signatures against). `ChatChannel` now signs every send and verifies every
   read instead of leaving `sig` a placeholder.
-- Read-state receipts **done**: `ChatChannel.mark_read`/`read_state` --
+- [x] Read-state receipts **done**: `ChatChannel.mark_read`/`read_state` --
   RECEIPT envelopes on the same causal chain as messages, acknowledged event
   hash carried as a small `inline` pointer (not `refs`, which stays reserved
   for ordering; CLAUDE.md invariant 3). `messages()` filters to MESSAGE kind
   only, so this was additive -- no existing test changed.
-- Author logs on real Swarm feeds **done**: `ucomm.bee.open_author_feed_log`
+- [x] Author logs on real Swarm feeds **done**: `ucomm.bee.open_author_feed_log`
   wires `RecordStoreAuthorLog` to recordstore's `BeeBytesStore` +
   `SwarmFeedPointer` -- the "drop-in swap, not a rewrite" this promised,
   confirmed live against a Bee 2.8.1 node (2026-07-26): a signed envelope
@@ -58,14 +67,14 @@ end-to-end; read-state receipts synced. No GSOC needed.
   signature-valid, through a second process opening the same feed cold.
   `tests/test_bee_live.py` is opt-in (env-var gated; needs a reachable node
   and a funded immutable postage batch) and skipped by default.
-- Out-of-band contact exchange **done**: `ucomm.contact.ContactCard` --
+- [x] Out-of-band contact exchange **done**: `ucomm.contact.ContactCard` --
   a self-attested address (domain-separated signature, so it can't be
   replayed as or forged from an envelope signature), with a compact
   `to_str`/`from_str` form for pasting/QR codes. Deliberately not the
   identity-wot library (root keys, device delegation, petnames --
   standalone, tracks the ecosystem "Swarm ID" work): just proof of control
   of an address before a channel exists.
-- **M1 is now feature-complete** per this milestone's description: real
+- [x] **M1 is now feature-complete** per this milestone's description: real
   signing, receipts, real feed I/O, and contact exchange are all done; the
   chat profile itself is still only wired to in-process `AuthorLog`s (not
   `ucomm.bee`) -- swapping that in is mechanical, not a new milestone item.
@@ -75,7 +84,7 @@ Notification daemon with graded alerts and dashboard (active/obsolete);
 channel directory; PSS hint path via a full node; IMAP and Nostr bridges —
 the **attention firewall** as standalone value.
 
-- Channel directory + graded dashboard **done** (D-1, D-2): `ucomm.daemon`.
+- [x] Channel directory + graded dashboard **done** (D-1, D-2): `ucomm.daemon`.
   Read-state aggregation **done** (D-3). Hint-delivery interface **done**
   (D-4's abstraction; no real backend chosen yet, deliberately -- see D-4).
   IMAP bridge **done** (D-5, both layers: conversion + live fetch loop),
@@ -116,53 +125,52 @@ layer (R-8) alongside.
 ## Initial issues
 
 Kernel (K):
-- K-1 ~~Canonical encoding for envelope/genesis~~ **done** (`ucomm.encoding`;
+- [x] K-1 Canonical encoding for envelope/genesis — done (`ucomm.encoding`;
   matches recordstore's canonical JSON format — sorted keys, compact
   separators, sha256 hex ids)
-- K-2 ~~ChannelId derivation + genesis validation rules~~ **done**
+- [x] K-2 ChannelId derivation + genesis validation rules — done
   (`Genesis.validate()`/`channel_id()`: non-empty nonce, known media kinds,
   known write_policy, positive rate limit, blessed profile if set)
-- K-3 ~~Causal-DAG merge with deterministic tie-break; property tests~~ **done**
+- [x] K-3 Causal-DAG merge with deterministic tie-break; property tests — done
   (`ucomm.log`: AuthorLog + merge_causal)
-- K-4 ~~recordstore adapter for author logs~~ **done** (`ucomm.store`: one
+- [x] K-4 recordstore adapter for author logs — done (`ucomm.store`: one
   envelope per record, keyed by zero-padded seq for native key-order iteration)
-- K-5 ~~Rendezvous interface + InMemory impl~~ **done** (`ucomm.rendezvous`);
+- [x] K-5 Rendezvous interface + InMemory impl — done (`ucomm.rendezvous`);
   PSS shim still open
-- K-6 MLS feasibility spike: epoch state as control events over logs
-- K-7 Device subkey delegation cert format (coordinate with Swarm ID)
-- K-8 ~~Profile conformance test harness (chat profile first)~~ **done**
+- [ ] K-6 MLS feasibility spike: epoch state as control events over logs
+- [ ] K-7 Device subkey delegation cert format (coordinate with Swarm ID)
+- [x] K-8 Profile conformance test harness (chat profile first) — done
   (`ucomm.profiles.chat`: `chat_genesis`/`validate_chat_genesis` + a minimal
   in-process `ChatChannel` exercising genesis validation, per-author logs,
   and causal-DAG merge end-to-end; no network yet)
-- K-9 Relay metadata minimization survey (light clients vs PSS/GSOC full-node
+- [ ] K-9 Relay metadata minimization survey (light clients vs PSS/GSOC full-node
   requirement)
 
 Attention (A):
-- A-1 ~~Policy engine reference impl~~ **done** (`ucomm.attention.decide`) +
+- [x] A-1 Policy engine reference impl — done (`ucomm.attention.decide`) +
   golden decision tests (Attila's four canonical examples, plus determinism
   and ceiling-monotonicity property tests)
-- A-2 Bond schedule design + minimal Gnosis Chain contract sketch
-- A-3 Reputation ratchet control loop: dynamics + defaults
-- A-4 RLN applicability study for GSOC mailboxes
-- A-5 Log-unit calibration: dogfooding protocol for defaults
+- [ ] A-2 Bond schedule design + minimal Gnosis Chain contract sketch
+- [ ] A-3 Reputation ratchet control loop: dynamics + defaults
+- [ ] A-4 RLN applicability study for GSOC mailboxes
+- [ ] A-5 Log-unit calibration: dogfooding protocol for defaults
 
 Daemon/inbox (D):
-- D-1 ~~Channel directory~~ **done** (`ucomm.daemon.ChannelDirectory`/
+- [x] D-1 Channel directory — done (`ucomm.daemon.ChannelDirectory`/
   `DirectoryEntry`: local, unsigned, single-writer; `channel_offsets`
   property feeds a `PolicyState` directly -- mute is a large negative
   offset, not a separate field, per ATTENTION.md §2)
-- D-2 ~~Notification daemon core: graded dashboard~~ **done**
+- [x] D-2 Notification daemon core: graded dashboard — done
   (`ucomm.daemon.build_dashboard`: pure projection over directory + channel
   events + policy + clock; resolves DESIGN.md §12's open question -- never
   persisted, always recomputed, same discipline as `decide()`)
-- D-3 ~~Daemon-level read-state aggregation across the whole directory~~
-  **done** (`ucomm.daemon.directory_read_state`; the underlying `RECEIPT`
+- [x] D-3 Daemon-level read-state aggregation across the whole directory — done (`ucomm.daemon.directory_read_state`; the underlying `RECEIPT`
   interpretation moved from a chat-profile convention to
   `ucomm.log.read_state`, a kernel-level one, since `RECEIPT` is a kernel
   `EventKind` and every profile using it should mean the same thing by it --
   `ChatChannel.read_state` now calls the shared function instead of
   duplicating it)
-- D-4 Push/hint delivery path (the daemon's actual "runs continuously,
+- [ ] D-4 Push/hint delivery path *(interface done; backend deliberately unchosen)* (the daemon's actual "runs continuously,
   learns about new events without polling everything" half --
   `build_dashboard` takes channel events as a plain mapping today, supplied
   however the caller likes, so nothing about D-1..D-3 assumes any of the
@@ -181,7 +189,7 @@ Daemon/inbox (D):
   with nothing ever published to it is already a legitimate use, not a
   degraded one), and labeled interim with a stated revisit condition if
   it isn't the native path.
-- D-5 IMAP bridge -- **conversion layer done**: `ucomm.profiles.mail`
+- [ ] D-5 IMAP bridge *(both layers done; the live loop still needs one run against a real mailbox)* -- **conversion layer done**: `ucomm.profiles.mail`
   (`mail_genesis`/`validate_mail_genesis`, DESIGN.md §4's mail row: open
   membership, write_policy=anyone -- unlike chat, no standing accept
   needed, matching how real email works) and `ucomm.bridges.imap`
@@ -202,37 +210,37 @@ Daemon/inbox (D):
   read-only, no SMTP**: this bridge ingests mail into the dashboard, it
   does not send or reply -- that would be a distinct, separate capability,
   not assumed to be in scope here.
-- D-6 Nostr bridge
+- [ ] D-6 Nostr bridge
 
 Recommendation (R) — sequencing per RECOMMENDATION.md §2: embeddings →
 personal import → open-graph ingestion → native CF. R-6 has the fewest
 research unknowns and is independently useful; R-4/R-5 work at N=1.
-- R-1 ~~Merge prior decentralized-recsys conversation~~ **done** (v2 merged)
-- R-2 Signal schema + publication tiers (private / neighborhood-ACT / public;
+- [x] R-1 Merge prior decentralized-recsys conversation — done (v2 merged)
+- [ ] R-2 Signal schema + publication tiers (private / neighborhood-ACT / public;
   implicit signals never published raw, coarse aggregates only)
-- R-3 Sketch directory + neighbor-gossip protocol (MinHash/SimHash format,
+- [ ] R-3 Sketch directory + neighbor-gossip protocol (MinHash/SimHash format,
   directory placement on Swarm, PSS/GSOC gossip; stamp/churn economics)
-- R-4 Local embedding pipeline: multimodal embed + ANN index as
+- [ ] R-4 Local embedding pipeline: multimodal embed + ANN index as
   content-addressed shared artifacts (stage 1; works at N=1)
-- R-5 Portability importer (Takeout et al.) → local taste model; optional
+- [ ] R-5 Portability importer (Takeout et al.) → local taste model; optional
   DP-noised donation path (selfishly-useful-first constraint)
-- R-6 Community channel directory + WebSub ingester (Podcast Index model for
+- [ ] R-6 Community channel directory + WebSub ingester (Podcast Index model for
   YouTube: directory format, lease-refresh subscription manager, event log to
   Swarm feeds) — near-term prototype
-- R-7 ATProto feed-generator prototype: CF experiments on the open firehose
+- [ ] R-7 ATProto feed-generator prototype: CF experiments on the open firehose
   (also exercises the bridge)
-- R-8 Infrastructure incentives: DVM-style paid recommendation services /
+- [ ] R-8 Infrastructure incentives: DVM-style paid recommendation services /
   solver ecology / RSPP assurance contracts for directories and indices
-- R-9 OntoDAG/mdl-fca concept layer over usage signals (taxonomy learned from
+- [ ] R-9 OntoDAG/mdl-fca concept layer over usage signals (taxonomy learned from
   data; annotation-spam via MDL)
-- R-10 Persona support in identity library (unlinkable per-domain key trees;
+- [ ] R-10 Persona support in identity library (unlinkable per-domain key trees;
   interaction with stake/reputation — ZK candidates) [with K-7]
 
 Naming/meta (N):
-- N-1 Project name (ucomm is a placeholder)
-- N-2 Message to the two Viktors: requirements ucomm puts on GSOC pub/sub
+- [ ] N-1 Project name (ucomm is a placeholder)
+- [ ] N-2 Message to the two Viktors: requirements ucomm puts on GSOC pub/sub
   (mailbox write rates, spam-economics hooks, light-client story)
-- N-3 Share DESIGN.md + ATTENTION.md with Attila for review against his model
+- [ ] N-3 Share DESIGN.md + ATTENTION.md with Attila for review against his model
 
 ## Explicitly deferred
 
