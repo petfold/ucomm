@@ -42,7 +42,7 @@ ROADMAP.md         Module decomposition, milestones, initial issues
 docs/USER_GUIDE.md      Tutorial: motivation, project overview, install, worked examples
 CLAUDE.md               Instructions and invariants for Claude Code sessions
 src/ucomm/              Python package (schema, policy engine, signing, chat profile)
-tests/                  pytest suite
+tests/                  pytest suite (131 tests)
 ```
 
 ## Status
