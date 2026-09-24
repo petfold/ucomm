@@ -247,9 +247,12 @@ OntoDAG's docs/plans/WALLS_AND_INBOXES.md:
 - [ ] W-1 `social` profile conformance suite + wall channel (one author's log,
   per-author ordering, single broadcaster, permanent)
 - [ ] W-2 Per-post payload keys from the category key graph (audience = reach
-  in the author's OntoDAG store; one log, each post its own audience)
+  in the author's OntoDAG store; one log, each post its own audience).
+  OntoDAG side built on its `swarm-sharing` branch as `ontodag.keyplan`
+  and run on mainnet (docs/WALLS_AND_INBOXES.md §9)
 - [ ] W-3 Inbox timeline: the dashboard sorted by publish time (a projection,
-  like the priority sort)
+  like the priority sort). `ontodag.keyplan.inbox` computes the merged
+  timeline; the dashboard side is ucomm's
 - [ ] W-4 Posts in the envelope → facts projector, facets under `sys:`
 - [ ] W-5 categor.io bridge: its shares and requests as envelopes in the
   universal inbox

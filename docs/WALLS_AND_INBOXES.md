@@ -135,3 +135,40 @@ detect back-dating, by `seq`.
 
 The shared questions (where `posted` is declared, ACT time buckets,
 cross-store names for replies, post identity) are in OntoDAG's note, §8.
+
+## 9. On Swarm, with no server (2026-09-25)
+
+OntoDAG's `docs/plans/SHARING_ON_SWARM.md` is the canonical plan for
+running all of this without a server. Its first build is on OntoDAG's
+`swarm-sharing` branch, unreleased, and has run on Swarm mainnet. What it
+means for ucomm:
+
+- **W-2 has an implementation on the OntoDAG side.** `ontodag.keyplan`
+  gives every post its own keys, reachable from exactly its audiences
+  (reach in the author's store). It has no separate channel per audience:
+  the author's key plan is one record store behind one feed.
+  - A reader with one personal key gets exactly their reach.
+  - `Received.timeline()` is the wall as that reader sees it, and
+    `keyplan.inbox()` merges several authors' walls: W-3's timeline, as a
+    projection.
+  - On mainnet, a reader's inbox over two authors' feeds came back in
+    `posted` order in about 16 s. Every read was exact, and a reader
+    removed from a group couldn't open the next post, even holding every
+    key it ever had.
+- **W-Q1:** the joint leaning holds (one log per author, per-post keys).
+  For an audience whose activity is itself sensitive, the plan adds a
+  separate log at a feed only that audience can find: its topic is
+  derived from the audience's key.
+- **W-Q2:** the log update is the signal. What costs is the poll. Opening
+  a feed took 1–10 s on a light node before any record was fetched, as
+  dappdata's T18 predicts for misses. So pace polling per author, and keep
+  hints optional (invariant 7).
+- **Chats stay ratchets** (DESIGN.md §8). The key plan is for publication
+  to structured audiences, where lazy rotation keeps removals cheap and
+  forward secrecy isn't the point.
+- **Requests from strangers** are this repo's rendezvous (DESIGN.md §6):
+  a GSOC mailbox behind the `Rendezvous` interface, optional, with out of
+  band always working.
+- **Identity:** a sharing identity has to be one key in every client, or a
+  user is two people. dappdata's proposed D29 takes it up; R-10's personas
+  are separate keys.
