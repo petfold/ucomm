@@ -242,6 +242,18 @@ Naming/meta (N):
   (mailbox write rates, spam-economics hooks, light-client story)
 - [ ] N-3 Share DESIGN.md + ATTENTION.md with Attila for review against his model
 
+Walls and inboxes (W) — docs/WALLS_AND_INBOXES.md; canonical design in
+OntoDAG's docs/plans/WALLS_AND_INBOXES.md:
+- [ ] W-1 `social` profile conformance suite + wall channel (one author's log,
+  per-author ordering, single broadcaster, permanent)
+- [ ] W-2 Per-post payload keys from the category key graph (audience = reach
+  in the author's OntoDAG store; one log, each post its own audience)
+- [ ] W-3 Inbox timeline: the dashboard sorted by publish time (a projection,
+  like the priority sort)
+- [ ] W-4 Posts in the envelope → facts projector, facets under `sys:`
+- [ ] W-5 categor.io bridge: its shares and requests as envelopes in the
+  universal inbox
+
 ## Explicitly deferred
 
 - Collaborative document editing semantics (payload-level CRDTs; Univer et al.)

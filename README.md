@@ -38,6 +38,7 @@ engine is the only authority over the receiver's attention.
 docs/DESIGN.md          Architecture: two planes, channel kernel, profiles, transports
 docs/ATTENTION.md       Attention economy: priority algebra, policy engine, mechanisms
 docs/RECOMMENDATION.md  Discovery & collaborative filtering (needs merge from prior notes)
+docs/WALLS_AND_INBOXES.md Walls (outboxes) and inboxes, with OntoDAG audiences
 ROADMAP.md         Module decomposition, milestones, initial issues
 docs/USER_GUIDE.md      Tutorial: motivation, project overview, install, worked examples
 CLAUDE.md               Instructions and invariants for Claude Code sessions
